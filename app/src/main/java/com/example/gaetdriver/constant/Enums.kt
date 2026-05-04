@@ -13,3 +13,7 @@ enum class AppNavDestinations(
     LIBRARY(route = "library", icon = R.drawable.ic_library, label = "Library"),
     PROFILE(route = "profile", icon = R.drawable.ic_account_box, label = "Profile")
 }
+
+enum class Variant {
+    Elevated, Outlined, Flat
+}

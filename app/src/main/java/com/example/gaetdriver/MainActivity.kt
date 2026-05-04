@@ -35,6 +35,8 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.window.core.layout.WindowSizeClass
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.base.i18n.rememberStrings
+import com.example.gaetdriver.core.utils.LocalStorageManager
+import com.example.gaetdriver.constant.AppNavDestinations
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,13 +74,20 @@ fun GaetDriverApp() {
         GaetDriverTheme(darkTheme = darkTheme) {
             var showAddOptions by remember { mutableStateOf(false) }
             val sheetState = rememberModalBottomSheetState()
+            val storageManager = remember { LocalStorageManager(context) }
 
             val mediaManager = rememberMediaManager(
                 onImageCaptured = { bitmap ->
-                    Log.d("Camera", "Captured bitmap: $bitmap")
+                    bitmap?.let {
+                        storageManager.saveBitmap(it)
+                        navController.navigate(AppNavDestinations.LIBRARY.route)
+                    }
                 },
                 onImageSelected = { uri ->
-                    Log.d("PhotoPicker", "Selected URI: $uri")
+                    uri?.let {
+                        storageManager.saveUri(it)
+                        navController.navigate(AppNavDestinations.LIBRARY.route)
+                    }
                 }
             )
 

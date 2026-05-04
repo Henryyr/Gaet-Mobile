@@ -29,9 +29,6 @@ fun LoginHeader(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Box{
-            AppImage()
-        }
         Text(
             text = if (isLoginMode) strings.welcomeBack else strings.welcomeBack,
             style = MaterialTheme.typography.displaySmall,
