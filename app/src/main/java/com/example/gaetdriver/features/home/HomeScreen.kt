@@ -14,15 +14,11 @@ import com.example.gaetdriver.core.ui.layout.ViewLayout
 @Composable
 fun HomeScreen() {
     val strings = LocalStrings.current
-    val env = AppConfig.environmentName
-    val baseUrl = AppConfig.baseUrl
-    val isDev = AppConfig.isDev
 
     ViewLayout(
         header = {
             SectionHeader(
                 title = strings.home,
-                actionLabel = "Env: $env"
             )
         },
         body = {
@@ -33,20 +29,7 @@ fun HomeScreen() {
                     )
 
 
-                if (isDev) {
 
-                    Column(verticalArrangement = Arrangement.SpaceEvenly) {
-                        Text(
-                            text = "Developer Info (Dev Mode)",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Text(
-                            text = "Base URL: $baseUrl",
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    }
 
 
         }

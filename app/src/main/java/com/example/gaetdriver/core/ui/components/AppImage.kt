@@ -22,17 +22,15 @@ import androidx.compose.ui.unit.dp
  */
 @Composable
 fun AppImage(
-    model: Any?,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop
 ) {
     Box(
+        propagateMinConstraints = true,
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
-        // Placeholder Icon
         Icon(
             imageVector = Icons.Default.Image,
             contentDescription = null,
