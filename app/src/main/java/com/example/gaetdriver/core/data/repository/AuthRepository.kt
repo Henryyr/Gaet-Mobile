@@ -1,6 +1,5 @@
-package com.example.gaetdriver.core.network
+package com.example.gaetdriver.core.data.repository
 
-import android.content.Context
 import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.Resource
 import com.google.firebase.Firebase
@@ -9,31 +8,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 /**
  * Repository to handle authentication and user profile data in Firestore.
  */
 class AuthRepository(
-    context: Context,
     private val auth: FirebaseAuth = Firebase.auth,
     private val db: FirebaseFirestore = Firebase.firestore,
 ) {
-    private val sessionManager = SessionManager(context)
-    private val externalScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     fun signIn(email: String, password: String): Flow<Resource<Boolean>> = safeCall {
-        val result = auth.signInWithEmailAndPassword(email, password).await()
-        val userId = result.user?.uid ?: throw AppException.AuthException("User not found")
-        
-        externalScope.launch {
-            sessionManager.saveSession(userId, email)
-        }
+        auth.signInWithEmailAndPassword(email, password).await()
         true
     }
 
@@ -58,27 +44,34 @@ class AuthRepository(
         )
         
         db.collection("users").document(userId).set(userData).await()
-        
-        externalScope.launch {
-            sessionManager.saveSession(userId, email)
-        }
         true
     }
 
     fun signOut() {
         auth.signOut()
-        externalScope.launch {
-            sessionManager.clearSession()
-        }
     }
 
     fun isUserLoggedIn(): Boolean {
         return auth.currentUser != null
     }
 
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
+    }
+
     fun addAuthStateListener(listener: (FirebaseAuth) -> Unit) {
         auth.addAuthStateListener(listener)
     }
+}
 
-    val userSession: Flow<UserSession?> = sessionManager.userSession
+/**
+ * Helper to handle Firebase exceptions in a Flow.
+ */
+private fun <T> safeCall(action: suspend () -> T): Flow<Resource<T>> = kotlinx.coroutines.flow.flow {
+    emit(Resource.Loading)
+    try {
+        emit(Resource.Success(action()))
+    } catch (e: Exception) {
+        emit(Resource.Error(e.localizedMessage ?: "Unknown Error"))
+    }
 }

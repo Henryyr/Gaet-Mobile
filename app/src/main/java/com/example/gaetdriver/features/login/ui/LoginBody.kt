@@ -3,7 +3,6 @@ package com.example.gaetdriver.features.login.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +17,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gaetdriver.core.base.i18n.LocalStrings
+import com.example.gaetdriver.core.data.model.LoginRequest
+import com.example.gaetdriver.core.data.model.RegisterRequest
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.core.ui.components.AppButton
 import com.example.gaetdriver.core.ui.components.AppTextField
@@ -37,8 +38,7 @@ fun LoginBody(
     var lastName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     
-    val isLoading by authManager.isLoading.collectAsState()
-    val error by authManager.error.collectAsState()
+    val uiState by authManager.state.collectAsState()
     val scrollState = rememberScrollState()
 
     Column(
@@ -53,7 +53,7 @@ fun LoginBody(
                 onValueChange = { firstName = it },
                 label = strings.firstName,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             AppTextField(
@@ -61,7 +61,7 @@ fun LoginBody(
                 onValueChange = { lastName = it },
                 label = strings.lastName,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             AppTextField(
@@ -69,7 +69,7 @@ fun LoginBody(
                 onValueChange = { phone = it },
                 label = strings.phoneNumber,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
         }
 
@@ -78,7 +78,7 @@ fun LoginBody(
             onValueChange = { email = it },
             label = strings.email,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         )
 
         AppTextField(
@@ -86,27 +86,27 @@ fun LoginBody(
             onValueChange = { password = it },
             label = strings.password,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading,
-            error = error // Display error message near the password field or use a global error component
+            enabled = !uiState.isLoading,
+            error = uiState.error 
         )
 
         AppButton(
             text = if (isLoginMode) strings.login else strings.signUp,
             onClick = {
                 if (isLoginMode) {
-                    authManager.signIn(email, password)
+                    authManager.signIn(LoginRequest(email, password))
                 } else {
-                    authManager.signUp(email, password, firstName, lastName, phone)
+                    authManager.signUp(RegisterRequest(email, password, firstName, lastName, phone))
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            isLoading = isLoading
+            isLoading = uiState.isLoading
         )
 
         TextButton(
             onClick = onModeToggle,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         ) {
             val toggleText = if (isLoginMode) strings.dontHaveAccount else strings.alreadyHaveAccount
             Text(

@@ -1,7 +1,7 @@
 package com.example.gaetdriver
 
 import android.os.Bundle
-import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -35,8 +35,14 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.window.core.layout.WindowSizeClass
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.base.i18n.rememberStrings
-import com.example.gaetdriver.core.utils.LocalStorageManager
 import com.example.gaetdriver.constant.AppNavDestinations
+import com.example.gaetdriver.core.data.repository.rememberPortfolioRepository
+import com.example.gaetdriver.core.data.model.CatalogItem
+import com.example.gaetdriver.core.utils.ImageUtils
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,19 +80,63 @@ fun GaetDriverApp() {
         GaetDriverTheme(darkTheme = darkTheme) {
             var showAddOptions by remember { mutableStateOf(false) }
             val sheetState = rememberModalBottomSheetState()
-            val storageManager = remember { LocalStorageManager(context) }
+            val portfolioRepo = rememberPortfolioRepository()
+            val scope = remember { CoroutineScope(Dispatchers.Main) }
 
             val mediaManager = rememberMediaManager(
                 onImageCaptured = { bitmap ->
-                    bitmap?.let {
-                        storageManager.saveBitmap(it)
-                        navController.navigate(AppNavDestinations.LIBRARY.route)
+                    bitmap?.let { b ->
+                        scope.launch {
+                            val uid = authManager.currentUserId ?: return@launch
+                            val count = portfolioRepo.getUserItemCount(uid)
+                            
+                            if (count >= 5) {
+                                Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                return@launch
+                            }
+
+                            val base64 = withContext(Dispatchers.Default) {
+                                ImageUtils.encodeToBase64(b)
+                            }
+                            portfolioRepo.addCatalogItem(
+                                CatalogItem(
+                                    userId = uid,
+                                    imageBase64 = base64
+                                )
+                            )
+                            navController.navigate(AppNavDestinations.LIBRARY.route)
+                        }
                     }
                 },
                 onImageSelected = { uri ->
-                    uri?.let {
-                        storageManager.saveUri(it)
-                        navController.navigate(AppNavDestinations.LIBRARY.route)
+                    uri?.let { u ->
+                        scope.launch {
+                            val uid = authManager.currentUserId ?: return@launch
+                            val count = portfolioRepo.getUserItemCount(uid)
+
+                            if (count >= 5) {
+                                Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                return@launch
+                            }
+
+                            val bitmap = withContext(Dispatchers.IO) {
+                                val input = context.contentResolver.openInputStream(u)
+                                android.graphics.BitmapFactory.decodeStream(input)
+                            }
+                            
+                            bitmap?.let { b ->
+                                val base64 = withContext(Dispatchers.Default) {
+                                    ImageUtils.encodeToBase64(b)
+                                }
+                                portfolioRepo.addCatalogItem(
+                                    CatalogItem(
+                                        userId = uid,
+                                        imageBase64 = base64
+                                    )
+                                )
+                            }
+                            navController.navigate(AppNavDestinations.LIBRARY.route)
+                        }
                     }
                 }
             )

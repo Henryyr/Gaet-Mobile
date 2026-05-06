@@ -45,6 +45,11 @@ interface AppStrings {
     val chooseOption: String
     val takePhoto: String
     val chooseGallery: String
+    val delete: String
+    val edit: String
+    val cancel: String
+    val confirmDelete: String
+    val deleteMessage: String
 }
 
 val EnStrings = object : AppStrings {
@@ -85,6 +90,11 @@ val EnStrings = object : AppStrings {
     override val chooseOption = "Choose Option"
     override val takePhoto = "Take a Photo"
     override val chooseGallery = "Choose from Gallery"
+    override val delete = "Delete"
+    override val edit = "Edit"
+    override val cancel = "Cancel"
+    override val confirmDelete = "Confirm Delete"
+    override val deleteMessage = "Are you sure you want to delete this photo?"
 }
 
 val IdStrings = object : AppStrings {
@@ -125,6 +135,11 @@ val IdStrings = object : AppStrings {
     override val chooseOption = "Pilih Opsi"
     override val takePhoto = "Ambil Foto"
     override val chooseGallery = "Pilih dari Galeri"
+    override val delete = "Hapus"
+    override val edit = "Ubah"
+    override val cancel = "Batal"
+    override val confirmDelete = "Konfirmasi Hapus"
+    override val deleteMessage = "Apakah Anda yakin ingin menghapus foto ini?"
 }
 
 val LocalStrings = staticCompositionLocalOf { EnStrings }

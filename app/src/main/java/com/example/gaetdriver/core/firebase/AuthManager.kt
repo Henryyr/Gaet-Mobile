@@ -1,12 +1,13 @@
 package com.example.gaetdriver.core.firebase
 
-import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
 import com.example.gaetdriver.core.base.Resource
-import com.example.gaetdriver.core.network.AuthRepository
+import com.example.gaetdriver.core.data.model.AuthState
+import com.example.gaetdriver.core.data.model.LoginRequest
+import com.example.gaetdriver.core.data.model.RegisterRequest
+import com.example.gaetdriver.core.data.repository.AuthRepository
 import com.example.gaetdriver.features.login.domain.LoginUseCase
 import com.example.gaetdriver.features.login.domain.SignUpUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -17,24 +18,21 @@ import kotlinx.coroutines.launch
 
 /**
  * A manager class to handle UI state for Authentication.
- * It uses UseCases for business logic and delegates auth state to [AuthRepository].
  */
 class AuthManager(
-    context: Context,
     private val scope: CoroutineScope
 ) {
-    private val repository: AuthRepository = AuthRepository(context)
+    private val repository: AuthRepository = AuthRepository()
     private val loginUseCase: LoginUseCase = LoginUseCase(repository)
     private val signUpUseCase: SignUpUseCase = SignUpUseCase(repository)
 
     private val _isLoggedIn = MutableStateFlow(repository.isUserLoggedIn())
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val currentUserId: String? get() = repository.getCurrentUserId()
 
-    private val _error = MutableStateFlow<String?>(null)
-    val error: StateFlow<String?> = _error.asStateFlow()
+    private val _state = MutableStateFlow(AuthState())
+    val state: StateFlow<AuthState> = _state.asStateFlow()
 
     init {
         repository.addAuthStateListener { firebaseAuth ->
@@ -42,33 +40,27 @@ class AuthManager(
         }
     }
 
-    fun signIn(email: String, password: String) {
-        if (email.isBlank() || password.isBlank()) {
-            _error.value = "Email and password cannot be empty"
+    fun signIn(request: LoginRequest) {
+        if (request.email.isBlank() || request.password.isBlank()) {
+            _state.value = _state.value.copy(error = "Email and password cannot be empty")
             return
         }
 
         scope.launch {
-            loginUseCase(email, password).collect { resource ->
+            loginUseCase(request).collect { resource ->
                 handleResource(resource)
             }
         }
     }
 
-    fun signUp(
-        email: String,
-        password: String,
-        firstName: String,
-        lastName: String,
-        phone: String
-    ) {
-        if (email.isBlank() || password.isBlank() || firstName.isBlank() || lastName.isBlank() || phone.isBlank()) {
-            _error.value = "All fields are required"
+    fun signUp(request: RegisterRequest) {
+        if (request.email.isBlank() || request.password.isBlank() || request.firstName.isBlank() || request.lastName.isBlank() || request.phone.isBlank()) {
+            _state.value = _state.value.copy(error = "All fields are required")
             return
         }
 
         scope.launch {
-            signUpUseCase(email, password, firstName, lastName, phone).collect { resource ->
+            signUpUseCase(request).collect { resource ->
                 handleResource(resource)
             }
         }
@@ -77,15 +69,13 @@ class AuthManager(
     private fun handleResource(resource: Resource<Boolean>) {
         when (resource) {
             is Resource.Loading -> {
-                _isLoading.value = true
-                _error.value = null
+                _state.value = _state.value.copy(isLoading = true, error = null)
             }
             is Resource.Success -> {
-                _isLoading.value = false
+                _state.value = _state.value.copy(isLoading = false, isSuccess = true)
             }
             is Resource.Error -> {
-                _isLoading.value = false
-                _error.value = resource.message
+                _state.value = _state.value.copy(isLoading = false, error = resource.message)
             }
             else -> {}
         }
@@ -96,7 +86,7 @@ class AuthManager(
     }
 
     fun clearError() {
-        _error.value = null
+        _state.value = _state.value.copy(error = null)
     }
 }
 
@@ -105,7 +95,6 @@ class AuthManager(
  */
 @Composable
 fun rememberAuthManager(): AuthManager {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    return remember(context, scope) { AuthManager(context, scope) }
+    return remember(scope) { AuthManager(scope) }
 }
