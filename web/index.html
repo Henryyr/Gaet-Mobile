@@ -1,112 +1,112 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Portfolio</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Guide Portfolio</title>
 
-    <!-- SDK Firebase (Compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="./style.css" />
 
-    <!-- Script SAKTI: Otomatis memuat config Firebase dari Hosting -->
-    <script src="/__/firebase/init.js"></script>
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js" defer></script>
 
-    <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-        }
-    </style>
+    <!-- Firebase Hosting auto config -->
+    <script src="/__/firebase/init.js" defer></script>
+
+    <script src="./script.js" defer></script>
 </head>
-<body class="bg-slate-50 font-sans min-h-screen pb-12">
-    <!-- Hero / Profile Section -->
-    <header class="gradient-bg text-white py-16 px-6 shadow-2xl text-center">
-        <div class="max-w-3xl mx-auto">
-            <h1 id="driver-name" class="text-5xl font-extrabold mb-3 tracking-tight">Memuat Nama...</h1>
-            <div id="driver-location" class="text-blue-100 text-xl mb-6 flex items-center justify-center gap-2"></div>
-            <div class="w-24 h-1 bg-yellow-400 mx-auto mb-6 rounded-full"></div>
-            <p id="driver-bio" class="text-xl leading-relaxed text-blue-50 font-light italic"></p>
+<body>
+<header class="hero">
+    <div class="hero__content container">
+        <section class="hero__main">
+            <p class="eyebrow">
+                <span></span>
+                Freelance Driver & Local Guide
+            </p>
+
+            <h1 id="driver-name" class="hero__title">Loading Name...</h1>
+
+            <div id="driver-location" class="hero__location"></div>
+
+            <p id="driver-bio" class="hero__bio">Loading travel story...</p>
+
+            <div class="hero__actions">
+                <a href="#catalog" class="button button--primary">Explore Trips</a>
+                <a href="#profile" class="button button--secondary">About the Guide</a>
+            </div>
+        </section>
+
+        <aside id="profile" class="profile-card">
+            <p class="profile-card__label">Guide Service</p>
+            <h2 class="profile-card__title">A private driver guide for flexible travel plans.</h2>
+            <p class="profile-card__text">
+                Helpful for airport pickup, city tours, day trips, and custom routes based on your schedule.
+            </p>
+
+            <div class="divider"></div>
+
+            <div class="profile-list">
+                <div class="profile-list__item">
+                    <span class="dot dot--green"></span>
+                    <div>
+                        <h3>Flexible Route</h3>
+                        <p>Plan the destination, pickup point, and trip duration more freely.</p>
+                    </div>
+                </div>
+
+                <div class="profile-list__item">
+                    <span class="dot dot--orange"></span>
+                    <div>
+                        <h3>Local Assistance</h3>
+                        <p>Get practical help with places, timing, stops, and travel suggestions.</p>
+                    </div>
+                </div>
+
+                <div class="profile-list__item">
+                    <span class="dot dot--brown"></span>
+                    <div>
+                        <h3>Private Trip</h3>
+                        <p>Suitable for solo travelers, couples, families, or small groups.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</header>
+
+<main id="catalog" class="main container">
+    <section class="catalog-panel">
+        <div class="catalog-header">
+            <div>
+                <p class="catalog-header__label">Travel Gallery</p>
+                <h2>Curated trip catalog</h2>
+                <p>Selected routes, places, and experiences you can book with a local driver guide.</p>
+            </div>
+
+            <div class="search-box">
+                <input id="search-input" type="search" placeholder="Search trips..." />
+            </div>
         </div>
-    </header>
 
-    <!-- Catalog Section -->
-    <main class="max-w-6xl mx-auto mt-12 px-6">
-        <div class="flex items-center justify-between mb-10">
-            <h2 class="text-3xl font-bold text-slate-800">Katalog Perjalanan</h2>
-            <span class="px-4 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold uppercase tracking-wider">Terbaru</span>
+        <div id="loading-state" class="skeleton-grid">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card skeleton-card--tablet"></div>
+            <div class="skeleton-card skeleton-card--desktop"></div>
         </div>
 
-        <div id="loading-state" class="flex flex-col items-center justify-center py-20">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p class="text-slate-500">Mencari petualangan terbaik...</p>
+        <div id="catalog-grid" class="catalog-grid hidden"></div>
+
+        <div id="empty-state" class="empty-state hidden">
+            <p class="empty-state__icon">⌁</p>
+            <h3>No travel catalog yet.</h3>
+            <p>Trips will appear automatically once catalog data is added.</p>
         </div>
+    </section>
+</main>
 
-        <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 hidden"></div>
-        <div id="empty-state" class="hidden text-center py-20">
-            <p class="text-slate-400 text-xl">Belum ada katalog perjalanan saat ini.</p>
-        </div>
-    </main>
-
-    <script>
-        // Tidak perlu inisialisasi manual lagi, sudah dihandle /__/firebase/init.js
-        const db = firebase.firestore();
-
-        const urlParams = new URLSearchParams(window.location.search);
-        let userId = urlParams.get('uid');
-
-        if (!userId) {
-            const pathParts = window.location.pathname.split('/');
-            userId = pathParts[pathParts.length - 1];
-        }
-
-        if (userId && userId !== 'index.html') {
-            db.collection("users").doc(userId).get().then((doc) => {
-                if (doc.exists) {
-                    const data = doc.data();
-                    document.getElementById('driver-name').innerText = `${data.first_name} ${data.last_name}`;
-                    document.getElementById('driver-bio').innerText = data.bio || "Siap mengantar Anda ke tujuan terbaik!";
-                    document.getElementById('driver-location').innerHTML = `
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        <span>${data.location || 'Indonesia'}</span>
-                    `;
-                    document.title = `${data.first_name} - Portofolio Guide`;
-                }
-            });
-
-            db.collection("catalog").where("userId", "==", userId).get().then((querySnapshot) => {
-                const grid = document.getElementById('catalog-grid');
-                const loading = document.getElementById('loading-state');
-                const empty = document.getElementById('empty-state');
-                loading.classList.add('hidden');
-
-                if (querySnapshot.empty) {
-                    empty.classList.remove('hidden');
-                    return;
-                }
-
-                grid.classList.remove('hidden');
-                querySnapshot.forEach((doc) => {
-                    const item = doc.data();
-                    const formattedPrice = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(item.price);
-                    grid.innerHTML += `
-                        <div class="bg-white rounded-3xl shadow-xl overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-                            <div class="relative overflow-hidden">
-                                <img src="data:image/jpeg;base64,${item.imageBase64}" class="w-full h-64 object-cover transform transition duration-500 group-hover:scale-110">
-                                <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full shadow-sm">
-                                    <p class="text-blue-600 font-bold text-sm">${formattedPrice}</p>
-                                </div>
-                            </div>
-                            <div class="p-8">
-                                <h3 class="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">${item.title || 'Petualangan Seru'}</h3>
-                                <p class="text-slate-500 leading-relaxed line-clamp-3">${item.description || 'Layanan guide terbaik.'}</p>
-                                <button class="mt-6 w-full py-3 bg-slate-900 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors">Lihat Detail</button>
-                            </div>
-                        </div>
-                    `;
-                });
-            });
-        }
-    </script>
+<footer class="footer">
+    <p>Local Guide Portfolio · Built to present each journey in a more personal way.</p>
+</footer>
 </body>
 </html>
