@@ -18,7 +18,8 @@ fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     actionLabel: String? = null,
-    onActionClick: () -> Unit = {}
+    onActionClick: () -> Unit = {},
+    trailingContent: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -33,10 +34,13 @@ fun SectionHeader(
             color = MaterialTheme.colorScheme.onBackground
         )
         
-        if (actionLabel != null) {
-            TextButton(onClick = onActionClick) {
-                Text(text = actionLabel)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (actionLabel != null) {
+                TextButton(onClick = onActionClick) {
+                    Text(text = actionLabel)
+                }
             }
+            trailingContent?.invoke()
         }
     }
 }

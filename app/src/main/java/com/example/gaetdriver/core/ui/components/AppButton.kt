@@ -51,9 +51,7 @@ fun AppButton(
             enabled = enabled && !isLoading,
             shape = RoundedCornerShape(16.dp),
             colors = buttonColors,
-            border = ButtonDefaults.outlinedButtonBorder.copy(
-                brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.primary)
-            )
+            border = ButtonDefaults.outlinedButtonBorder(enabled = enabled && !isLoading)
         ) {
             ButtonContent(text, isLoading)
         }

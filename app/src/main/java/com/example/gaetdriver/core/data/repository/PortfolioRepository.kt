@@ -1,5 +1,6 @@
 package com.example.gaetdriver.core.data.repository
 
+import com.example.gaetdriver.core.data.model.ActivityLog
 import com.example.gaetdriver.core.data.model.CatalogItem
 import com.example.gaetdriver.core.data.model.DriverProfile
 import com.google.firebase.firestore.FirebaseFirestore
@@ -14,6 +15,38 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
 
     private val usersCollection = firestore.collection("users")
     private val catalogCollection = firestore.collection("catalog")
+    private val activitiesCollection = firestore.collection("activities")
+
+    /**
+     * Records a new activity for the user.
+     */
+    suspend fun logActivity(userId: String, type: String, title: String, description: String = "") {
+        val log = ActivityLog(
+            userId = userId,
+            type = type,
+            title = title,
+            description = description,
+        )
+        activitiesCollection.add(log).await()
+    }
+
+    /**
+     * Gets all activity logs for a user.
+     */
+    fun getActivityLogs(userId: String): Flow<List<ActivityLog>> = callbackFlow {
+        val subscription = activitiesCollection.whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
+                val items = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(ActivityLog::class.java)?.apply { id = doc.id }
+                } ?: emptyList()
+                trySend(items.sortedByDescending { it.createdAt })
+            }
+        awaitClose { subscription.remove() }
+    }
 
     /**
      * Saves or updates the driver profile in 'users' collection.
@@ -33,7 +66,11 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
      * Adds a new item to the catalog.
      */
     suspend fun addCatalogItem(item: CatalogItem) {
-        catalogCollection.add(item).await()
+        if (item.id.isEmpty()) {
+            catalogCollection.add(item).await()
+        } else {
+            catalogCollection.document(item.id).set(item).await()
+        }
     }
 
     /**

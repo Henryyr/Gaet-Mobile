@@ -14,9 +14,10 @@ object ImageUtils {
 
     /**
      * Encodes a Bitmap to a Base64 string.
-     * Resizes the bitmap to a maximum dimension to ensure it fits in Firestore.
+     * Increased maxDimension to 1600 for high-quality display.
+     * Firestore limit is 1MB (~1.3M Base64 chars), this should stay around 400-600KB.
      */
-    fun encodeToBase64(bitmap: Bitmap, quality: Int = 70, maxDimension: Int = 400): String {
+    fun encodeToBase64(bitmap: Bitmap, quality: Int = 85, maxDimension: Int = 1600): String {
         val scaledBitmap = scaleBitmap(bitmap, maxDimension)
         val byteArrayOutputStream = ByteArrayOutputStream()
         scaledBitmap.compress(Bitmap.CompressFormat.JPEG, quality, byteArrayOutputStream)

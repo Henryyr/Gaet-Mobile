@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
     id("com.google.gms.google-services")
 }
 
@@ -52,6 +51,7 @@ android {
         }
         create("prod") {
             dimension = "environment"
+            versionNameSuffix = "-prod"
             buildConfigField("String", "BASE_URL", "\"https://api.lifeos.com/\"")
         }
     }
@@ -76,9 +76,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.coil.compose)
-    
-    implementation(libs.lyricist)
-    ksp(libs.lyricist.processor)
     
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)
