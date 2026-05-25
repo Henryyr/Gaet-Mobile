@@ -58,7 +58,7 @@ fun HomeScreen() {
                                 putExtra(Intent.EXTRA_SUBJECT, "My Portfolio")
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "Check out my driver portfolio: https://gaet-driver.web.app/portfolio/$userId"
+                                    "Check out my driver portfolio: https://gaetdriver.web.app/portfolio/$userId"
                                 )
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Share Portfolio"))

@@ -84,7 +84,7 @@ fun GaetDriverApp() {
                         scope.launch {
                             val uid = authManager.currentUserId ?: return@launch
                             val count = portfolioRepo.getUserItemCount(uid)
-                            if (count >= 5) {
+                            if (count >= 6) {
                                 Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
                                 return@launch
                             }
@@ -110,7 +110,7 @@ fun GaetDriverApp() {
                         scope.launch {
                             val uid = authManager.currentUserId ?: return@launch
                             val count = portfolioRepo.getUserItemCount(uid)
-                            if (count >= 5) {
+                            if (count >= 6) {
                                 Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
                                 return@launch
                             }
