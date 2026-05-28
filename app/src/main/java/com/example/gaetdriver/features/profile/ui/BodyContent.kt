@@ -1,34 +1,26 @@
 package com.example.gaetdriver.features.profile.ui
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.core.data.repository.rememberPortfolioRepository
 import com.example.gaetdriver.core.data.model.DriverProfile
-import com.example.gaetdriver.core.ui.components.AppButton
-import com.example.gaetdriver.core.ui.components.AppTextField
-import com.example.gaetdriver.core.ui.components.ButtonStyle
-import com.example.gaetdriver.core.ui.components.ThemeOption
+import com.example.gaetdriver.core.ui.components.*
 import com.example.gaetdriver.core.utils.DeviceManager
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BodyContent(authManager: AuthManager) {
     val strings = LocalStrings.current
@@ -39,7 +31,8 @@ fun BodyContent(authManager: AuthManager) {
     val scope = rememberCoroutineScope()
 
     var profile by remember { mutableStateOf<DriverProfile?>(null) }
-    var isEditing by remember { mutableStateOf(value = false) }
+    var isEditing by remember { mutableStateOf(false) }
+    var showPreview by remember { mutableStateOf(false) }
 
     val userId = authManager.currentUserId
 
@@ -60,10 +53,31 @@ fun BodyContent(authManager: AuthManager) {
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Driver Portfolio",
-                style = MaterialTheme.typography.titleMedium
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Driver Portfolio",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                
+                if (!isEditing && profile != null) {
+                    TextButton(
+                        onClick = { showPreview = true },
+                        contentPadding = PaddingValues(horizontal = 12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Visibility,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Preview Web", style = MaterialTheme.typography.labelLarge)
+                    }
+                }
+            }
 
             if (!isEditing) {
                 profile?.let { p ->
@@ -149,6 +163,44 @@ fun BodyContent(authManager: AuthManager) {
                 style = ButtonStyle.Outline,
                 modifier = Modifier.fillMaxWidth()
             )
+        }
+    }
+
+    // In-App Web Preview Dialog
+    if (showPreview && userId != null) {
+        Dialog(
+            onDismissRequest = { showPreview = false },
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Header with Close Button
+                    CenterAlignedTopAppBar(
+                        title = { Text("Web Portfolio Preview", style = MaterialTheme.typography.titleMedium) },
+                        navigationIcon = {
+                            IconButton(onClick = { showPreview = false }) {
+                                Icon(Icons.Default.Close, contentDescription = "Close")
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+                    
+                    // The Lightweight WebView
+                    AppWebView(
+                        url = "https://gaetdriver.web.app/portfolio/$userId",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
         }
     }
 }

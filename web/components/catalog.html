@@ -1,0 +1,27 @@
+<section class="catalog-panel">
+    <div class="catalog-header">
+        <div>
+            <p class="catalog-header__label">Travel Gallery</p>
+            <h2>Curated trip catalog</h2>
+            <p>Selected routes, places, and experiences you can book with a local driver guide.</p>
+        </div>
+
+        <div class="search-box">
+            <input id="search-input" type="search" placeholder="Search trips..." />
+        </div>
+    </div>
+
+    <div id="loading-state" class="skeleton-grid">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card skeleton-card--tablet"></div>
+        <div class="skeleton-card skeleton-card--desktop"></div>
+    </div>
+
+    <div id="catalog-grid" class="catalog-grid hidden"></div>
+
+    <div id="empty-state" class="empty-state hidden">
+        <p class="empty-state__icon">⌁</p>
+        <h3>No travel catalog yet.</h3>
+        <p>Trips will appear automatically once catalog data is added.</p>
+    </div>
+</section>

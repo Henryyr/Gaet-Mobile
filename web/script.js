@@ -1,187 +1,129 @@
-const db = firebase.firestore();
+/**
+ * Driver Guide Portfolio - Core Logic
+ * Handles component loading, Firebase integration, and UI rendering.
+ * Optimized for modularity and absolute paths.
+ */
 
-const urlParams = new URLSearchParams(window.location.search);
-let userId = urlParams.get("uid");
+document.addEventListener('DOMContentLoaded', async () => {
+    // 1. UTILS
+    const utils = {
+        escape: (str) => String(str || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])),
+        formatCurrency: (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0),
+        getUserId: () => {
+            const params = new URLSearchParams(window.location.search);
+            const qId = params.get('uid');
+            if (qId) return qId;
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            const last = parts[parts.length - 1];
+            return (last && last !== 'index.html' && last !== 'portfolio') ? last : null;
+        },
+        loadComponent: async (path, targetId) => {
+            try {
+                const res = await fetch(path);
+                if (!res.ok) throw new Error(`Status: ${res.status}`);
+                const html = await res.text();
+                document.getElementById(targetId).innerHTML += html;
+            } catch (err) {
+                console.error(`Failed to load component: ${path}`, err);
+            }
+        }
+    };
 
-if (!userId) {
-  const pathParts = window.location.pathname.split("/").filter(Boolean);
-  userId = pathParts[pathParts.length - 1];
-}
+    // 2. LOAD UI COMPONENTS (Sequential to maintain order)
+    // We use absolute paths (starting with /) to ensure they load regardless of URL depth
+    await utils.loadComponent('/components/hero.html', 'hero-container');
+    await utils.loadComponent('/components/profile.html', 'hero-container');
+    await utils.loadComponent('/components/catalog.html', 'catalog-container');
+    await utils.loadComponent('/components/footer.html', 'footer-container');
 
-const state = {
-  catalog: [],
-  filtered: []
-};
+    // UI ELEMENTS (Mapped after components are fully injected)
+    const ui = {
+        name: document.getElementById('driver-name'),
+        location: document.getElementById('driver-location'),
+        bio: document.getElementById('driver-bio'),
+        loading: document.getElementById('loading-state'),
+        grid: document.getElementById('catalog-grid'),
+        empty: document.getElementById('empty-state'),
+        search: document.getElementById('search-input')
+    };
 
-const el = {
-  name: document.getElementById("driver-name"),
-  location: document.getElementById("driver-location"),
-  bio: document.getElementById("driver-bio"),
-  loading: document.getElementById("loading-state"),
-  grid: document.getElementById("catalog-grid"),
-  empty: document.getElementById("empty-state"),
-  search: document.getElementById("search-input")
-};
+    // 3. WIDGETS
+    const components = {
+        catalogCard: (item) => {
+            const title = utils.escape(item.title || "Special Journey");
+            const price = utils.formatCurrency(item.price);
+            const desc = utils.escape(item.description || "Personalized travel experience with a local driver guide.");
+            const image = item.imageBase64 ? `data:image/jpeg;base64,${item.imageBase64}` : 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80';
+            return `
+                <article class="catalog-card">
+                    <div class="catalog-card__media">
+                        <img src="${image}" alt="${title}" loading="lazy" />
+                        <div class="catalog-card__price">${price}</div>
+                    </div>
+                    <div class="catalog-card__body">
+                        <h3 class="catalog-card__title">${title}</h3>
+                        <p class="catalog-card__text">${desc}</p>
+                        <button class="catalog-card__btn">Explore Details</button>
+                    </div>
+                </article>
+            `;
+        }
+    };
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+    // 4. CORE ACTIONS
+    const db = firebase.firestore();
+    const actions = {
+        renderCatalog: (items) => {
+            if (!ui.loading || !ui.grid || !ui.empty) return;
+            ui.loading.classList.add('hidden');
+            ui.grid.innerHTML = "";
+            if (!items || items.length === 0) {
+                ui.grid.classList.add('hidden');
+                ui.empty.classList.remove('hidden');
+                return;
+            }
+            ui.empty.classList.add('hidden');
+            ui.grid.classList.remove('hidden');
+            ui.grid.innerHTML = items.map(components.catalogCard).join('');
+        },
+        handleSearch: () => {
+            const key = ui.search.value.toLowerCase().trim();
+            const filtered = actions.state.catalog.filter(item =>
+                (item.title + " " + item.description).toLowerCase().includes(key)
+            );
+            actions.renderCatalog(filtered);
+        },
+        state: { catalog: [] },
+        fetchData: async (uid) => {
+            try {
+                const userDoc = await db.collection("users").doc(uid).get();
+                if (userDoc.exists) {
+                    const d = userDoc.data();
+                    const fullName = `${d.first_name || ''} ${d.last_name || ''}`.trim();
+                    if (ui.name) ui.name.innerText = fullName || "Professional Guide";
+                    if (ui.bio) ui.bio.innerText = d.bio || "Crafting memorable journeys.";
+                    if (ui.location) ui.location.innerHTML = `📍 ${utils.escape(d.location || 'Indonesia')}`;
+                    document.title = `${fullName} - Portfolio`;
+                }
+                const snap = await db.collection("catalog").where("userId", "==", uid).get();
+                actions.state.catalog = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                actions.renderCatalog(actions.state.catalog);
+            } catch (err) {
+                console.error("Data error:", err);
+                if (ui.loading) ui.loading.classList.add('hidden');
+                if (ui.empty) ui.empty.classList.remove('hidden');
+            }
+        }
+    };
 
-function formatPrice(price) {
-  const number = Number(price || 0);
-
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0
-  }).format(number);
-}
-
-function imageSrc(item) {
-  if (item.imageBase64) return `data:image/jpeg;base64,${item.imageBase64}`;
-  if (item.imageUrl) return item.imageUrl;
-
-  return "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1000&q=80";
-}
-
-function renderCatalog(items) {
-  el.loading.classList.add("hidden");
-  el.grid.innerHTML = "";
-
-  if (!items.length) {
-    el.grid.classList.add("hidden");
-    el.empty.classList.remove("hidden");
-    return;
-  }
-
-  el.empty.classList.add("hidden");
-  el.grid.classList.remove("hidden");
-
-  el.grid.innerHTML = items.map((item) => {
-    const title = escapeHtml(item.title || "Local Adventure");
-    const description = escapeHtml(
-      item.description || "A comfortable and flexible driver guide service for your journey."
-    );
-    const price = formatPrice(item.price);
-    const img = escapeHtml(imageSrc(item));
-    const duration = escapeHtml(item.duration || "Flexible trip");
-    const area = escapeHtml(item.area || item.location || "Local route");
-
-    return `
-      <article class="catalog-card">
-        <div class="catalog-card__media">
-          <img src="${img}" alt="${title}" class="catalog-card__image" loading="lazy" />
-          <div class="price-pill">${price}</div>
-        </div>
-
-        <div class="catalog-card__body">
-          <div class="catalog-card__tags">
-            <span class="tag tag--green">${area}</span>
-            <span class="tag tag--orange">${duration}</span>
-          </div>
-
-          <h3 class="catalog-card__title">${title}</h3>
-          <p class="catalog-card__description">${description}</p>
-
-          <button type="button" class="catalog-card__button">View Trip Details</button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
-
-function applySearch() {
-  const keyword = el.search.value.trim().toLowerCase();
-
-  state.filtered = state.catalog.filter((item) => {
-    const haystack = [item.title, item.description, item.area, item.location, item.duration]
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(keyword);
-  });
-
-  renderCatalog(state.filtered);
-}
-
-async function loadProfile(uid) {
-  const doc = await db.collection("users").doc(uid).get();
-
-  if (!doc.exists) {
-    el.name.innerText = "Guide Not Found";
-    el.bio.innerText = "This profile is not available or the link is invalid.";
-    el.location.innerHTML = `<span>Indonesia</span>`;
-    return;
-  }
-
-  const data = doc.data();
-  const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim() || "Local Guide";
-
-  el.name.innerText = fullName;
-  el.bio.innerText = data.bio ||
-    "Ready to take you through the best places with a comfortable, safe, and personal journey.";
-
-  el.location.innerHTML = `
-    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-    </svg>
-    <span>${escapeHtml(data.location || "Indonesia")}</span>
-  `;
-
-  document.title = `${fullName} - Driver Guide Portfolio`;
-}
-
-async function loadCatalog(uid) {
-  const snapshot = await db.collection("catalog").where("userId", "==", uid).get();
-
-  state.catalog = snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data()
-  }));
-
-  state.filtered = state.catalog;
-  renderCatalog(state.filtered);
-}
-
-function showMissingUserState() {
-  el.name.innerText = "Guide Link Missing";
-  el.bio.innerText = "Add ?uid=USER_ID to the URL or use /USER_ID in the path.";
-  el.location.innerHTML = `<span>Indonesia</span>`;
-  el.loading.classList.add("hidden");
-  el.empty.classList.remove("hidden");
-}
-
-function showErrorState(error) {
-  console.error(error);
-  el.loading.classList.add("hidden");
-  el.empty.classList.remove("hidden");
-  el.empty.innerHTML = `
-    <h3>Unable to load data.</h3>
-    <p>Please check your Firebase connection or catalog structure.</p>
-  `;
-}
-
-async function init() {
-  if (!userId || userId === "index.html") {
-    showMissingUserState();
-    return;
-  }
-
-  try {
-    await Promise.all([
-      loadProfile(userId),
-      loadCatalog(userId)
-    ]);
-  } catch (error) {
-    showErrorState(error);
-  }
-}
-
-el.search.addEventListener("input", applySearch);
-init();
+    // 5. START
+    const userId = utils.getUserId();
+    if (!userId) {
+        if (ui.name) ui.name.innerText = "Local Guide Portfolio";
+        if (ui.loading) ui.loading.classList.add('hidden');
+        if (ui.empty) ui.empty.classList.remove('hidden');
+    } else {
+        if (ui.search) ui.search.addEventListener('input', actions.handleSearch);
+        actions.fetchData(userId);
+    }
+});

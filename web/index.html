@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Driver Guide Portfolio</title>
 
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="/style.css" />
 
     <!-- Firebase SDK Compat -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
@@ -14,99 +14,21 @@
     <!-- Firebase Hosting auto config -->
     <script src="/__/firebase/init.js" defer></script>
 
-    <script src="./script.js" defer></script>
+    <script src="/script.js" defer></script>
 </head>
 <body>
-<header class="hero">
-    <div class="hero__content container">
-        <section class="hero__main">
-            <p class="eyebrow">
-                <span></span>
-                Freelance Driver & Local Guide
-            </p>
-
-            <h1 id="driver-name" class="hero__title">Loading Name...</h1>
-
-            <div id="driver-location" class="hero__location"></div>
-
-            <p id="driver-bio" class="hero__bio">Loading travel story...</p>
-
-            <div class="hero__actions">
-                <a href="#catalog" class="button button--primary">Explore Trips</a>
-                <a href="#profile" class="button button--secondary">About the Guide</a>
-            </div>
-        </section>
-
-        <aside id="profile" class="profile-card">
-            <p class="profile-card__label">Guide Service</p>
-            <h2 class="profile-card__title">A private driver guide for flexible travel plans.</h2>
-            <p class="profile-card__text">
-                Helpful for airport pickup, city tours, day trips, and custom routes based on your schedule.
-            </p>
-
-            <div class="divider"></div>
-
-            <div class="profile-list">
-                <div class="profile-list__item">
-                    <span class="dot dot--green"></span>
-                    <div>
-                        <h3>Flexible Route</h3>
-                        <p>Plan the destination, pickup point, and trip duration more freely.</p>
-                    </div>
-                </div>
-
-                <div class="profile-list__item">
-                    <span class="dot dot--orange"></span>
-                    <div>
-                        <h3>Local Assistance</h3>
-                        <p>Get practical help with places, timing, stops, and travel suggestions.</p>
-                    </div>
-                </div>
-
-                <div class="profile-list__item">
-                    <span class="dot dot--brown"></span>
-                    <div>
-                        <h3>Private Trip</h3>
-                        <p>Suitable for solo travelers, couples, families, or small groups.</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </div>
-</header>
-
-<main id="catalog" class="main container">
-    <section class="catalog-panel">
-        <div class="catalog-header">
-            <div>
-                <p class="catalog-header__label">Travel Gallery</p>
-                <h2>Curated trip catalog</h2>
-                <p>Selected routes, places, and experiences you can book with a local driver guide.</p>
-            </div>
-
-            <div class="search-box">
-                <input id="search-input" type="search" placeholder="Search trips..." />
-            </div>
+    <header class="hero">
+        <div id="hero-container" class="hero__content container">
+            <!-- hero.html & profile.html injected here -->
         </div>
+    </header>
 
-        <div id="loading-state" class="skeleton-grid">
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card skeleton-card--tablet"></div>
-            <div class="skeleton-card skeleton-card--desktop"></div>
-        </div>
+    <main id="catalog-container" class="main container">
+        <!-- catalog.html injected here -->
+    </main>
 
-        <div id="catalog-grid" class="catalog-grid hidden"></div>
-
-        <div id="empty-state" class="empty-state hidden">
-            <p class="empty-state__icon">⌁</p>
-            <h3>No travel catalog yet.</h3>
-            <p>Trips will appear automatically once catalog data is added.</p>
-        </div>
-    </section>
-</main>
-
-<footer class="footer">
-    <p>Local Guide Portfolio · Built to present each journey in a more personal way.</p>
-</footer>
+    <footer id="footer-container" class="footer">
+        <!-- footer.html injected here -->
+    </footer>
 </body>
 </html>
