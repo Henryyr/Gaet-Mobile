@@ -88,6 +88,20 @@ class AuthManager(
     fun clearError() {
         _state.value = _state.value.copy(error = null)
     }
+
+    fun validateSession() {
+        val uid = currentUserId ?: return
+        scope.launch {
+            try {
+                val profile = repository.getCurrentUserProfile(uid)
+                if (profile == null) {
+                    signOut()
+                }
+            } catch (_: Exception) {
+                // Ignore network errors during background validation
+            }
+        }
+    }
 }
 
 /**

@@ -1,5 +1,6 @@
 package com.example.gaetdriver.features.library
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.firebase.rememberAuthManager
@@ -24,6 +26,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LibraryScreen() {
     val strings = LocalStrings.current
+    val context = LocalContext.current
     val portfolioRepo = rememberPortfolioRepository()
     val authManager = rememberAuthManager()
     val scope = rememberCoroutineScope()
@@ -128,15 +131,19 @@ fun LibraryScreen() {
                     selectedItem.value?.let { item ->
                         val updated = item.copy(title = tempTitle, price = priceVal)
                         scope.launch {
-                            portfolioRepo.addCatalogItem(updated)
-                            portfolioRepo.logActivity(
-                                userId = userId ?: "",
-                                type = "EDIT",
-                                title = "Updated Trip",
-                                description = "Updated trip: ${updated.title}"
-                            )
-                            showEditDialog.value = false
-                            selectedItem.value = null
+                            try {
+                                portfolioRepo.addCatalogItem(updated)
+                                portfolioRepo.logActivity(
+                                    userId = userId ?: "",
+                                    type = "EDIT",
+                                    title = "Updated Trip",
+                                    description = "Updated trip: ${updated.title}"
+                                )
+                                showEditDialog.value = false
+                                selectedItem.value = null
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                            }
                         }
                     }
                 }) {

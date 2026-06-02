@@ -55,6 +55,12 @@ fun GaetDriverApp() {
     val authManager = rememberAuthManager()
     val isLoggedIn by authManager.isLoggedIn.collectAsState()
 
+    LaunchedEffect(isLoggedIn) {
+        if (isLoggedIn) {
+            authManager.validateSession()
+        }
+    }
+
     val context = LocalContext.current
     val deviceManager = remember { DeviceManager(context) }
     val themeMode by deviceManager.themeMode.collectAsState(initial = "system")
@@ -218,29 +224,34 @@ fun GaetDriverApp() {
                                             val bitmap = pendingImage.value ?: return@AppButton
                                             isUploading.value = true
                                             scope.launch {
-                                                val uid = authManager.currentUserId ?: return@launch
-                                                val base64 = withContext(Dispatchers.Default) {
-                                                    ImageUtils.encodeToBase64(bitmap)
-                                                }
-                                                portfolioRepo.addCatalogItem(
-                                                    CatalogItem(
-                                                        userId = uid,
-                                                        title = tripTitle,
-                                                        price = tripPrice.toDoubleOrNull() ?: 0.0,
-                                                        imageBase64 = base64
+                                                try {
+                                                    val uid = authManager.currentUserId ?: return@launch
+                                                    val base64 = withContext(Dispatchers.Default) {
+                                                        ImageUtils.encodeToBase64(bitmap)
+                                                    }
+                                                    portfolioRepo.addCatalogItem(
+                                                        CatalogItem(
+                                                            userId = uid,
+                                                            title = tripTitle,
+                                                            price = tripPrice.toDoubleOrNull() ?: 0.0,
+                                                            imageBase64 = base64
+                                                        )
                                                     )
-                                                )
-                                                portfolioRepo.logActivity(
-                                                    userId = uid,
-                                                    type = "UPLOAD",
-                                                    title = "Uploaded new Trip",
-                                                    description = "Trip: $tripTitle"
-                                                )
-                                                isUploading.value = false
-                                                showDetailsDialog.value = false
-                                                pendingImage.value = null
-                                                // Instant jump to Library (Index 2) for performance
-                                                pagerState.scrollToPage(2)
+                                                    portfolioRepo.logActivity(
+                                                        userId = uid,
+                                                        type = "UPLOAD",
+                                                        title = "Uploaded new Trip",
+                                                        description = "Trip: $tripTitle"
+                                                    )
+                                                    // Instant jump to Library (Index 2) for performance
+                                                    pagerState.scrollToPage(2)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Failed to save: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                } finally {
+                                                    isUploading.value = false
+                                                    showDetailsDialog.value = false
+                                                    pendingImage.value = null
+                                                }
                                             }
                                         }
                                     )

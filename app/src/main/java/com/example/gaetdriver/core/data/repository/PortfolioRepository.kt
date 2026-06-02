@@ -21,13 +21,17 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
      * Records a new activity for the user.
      */
     suspend fun logActivity(userId: String, type: String, title: String, description: String = "") {
-        val log = ActivityLog(
-            userId = userId,
-            type = type,
-            title = title,
-            description = description,
-        )
-        activitiesCollection.add(log).await()
+        try {
+            val log = ActivityLog(
+                userId = userId,
+                type = type,
+                title = title,
+                description = description,
+            )
+            activitiesCollection.add(log).await()
+        } catch (_: Exception) {
+            // Silently fail activity logging to avoid crashing critical flows
+        }
     }
 
     /**
@@ -52,24 +56,36 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
      * Saves or updates the driver profile in 'users' collection.
      */
     suspend fun saveProfile(uid: String, profile: DriverProfile) {
-        usersCollection.document(uid).set(profile).await()
+        try {
+            usersCollection.document(uid).set(profile).await()
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     /**
      * Gets the driver profile from 'users' collection.
      */
     suspend fun getProfile(uid: String): DriverProfile? {
-        return usersCollection.document(uid).get().await().toObject(DriverProfile::class.java)
+        return try {
+            usersCollection.document(uid).get().await().toObject(DriverProfile::class.java)
+        } catch (e: Exception) {
+            null
+        }
     }
 
     /**
      * Adds a new item to the catalog.
      */
     suspend fun addCatalogItem(item: CatalogItem) {
-        if (item.id.isEmpty()) {
-            catalogCollection.add(item).await()
-        } else {
-            catalogCollection.document(item.id).set(item).await()
+        try {
+            if (item.id.isEmpty()) {
+                catalogCollection.add(item).await()
+            } else {
+                catalogCollection.document(item.id).set(item).await()
+            }
+        } catch (e: Exception) {
+            throw e
         }
     }
 
@@ -113,8 +129,12 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
      * Hard delete of the document.
      */
     suspend fun deleteCatalogItem(itemId: String) {
-        if (itemId.isNotEmpty()) {
-            catalogCollection.document(itemId).delete().await()
+        try {
+            if (itemId.isNotEmpty()) {
+                catalogCollection.document(itemId).delete().await()
+            }
+        } catch (e: Exception) {
+            throw e
         }
     }
 }

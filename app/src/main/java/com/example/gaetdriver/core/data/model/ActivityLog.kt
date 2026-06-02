@@ -1,5 +1,6 @@
 package com.example.gaetdriver.core.data.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.PropertyName
 
@@ -14,5 +15,5 @@ data class ActivityLog(
     var title: String = "",
     var description: String = "",
     @get:PropertyName("created_at") @set:PropertyName("created_at")
-    var createdAt: Long = System.currentTimeMillis()
+    var createdAt: Timestamp = Timestamp.now()
 )

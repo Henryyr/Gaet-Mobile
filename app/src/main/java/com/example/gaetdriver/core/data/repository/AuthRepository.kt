@@ -19,7 +19,15 @@ class AuthRepository(
     private val db: FirebaseFirestore = Firebase.firestore,
 ) {
     fun signIn(email: String, password: String): Flow<Resource<Boolean>> = safeCall {
-        auth.signInWithEmailAndPassword(email, password).await()
+        val authResult = auth.signInWithEmailAndPassword(email, password).await()
+        val userId = authResult.user?.uid ?: throw AppException.AuthException("Login failed")
+
+        // Verify Firestore document exists
+        val doc = db.collection("users").document(userId).get().await()
+        if (!doc.exists()) {
+            auth.signOut()
+            throw AppException.AuthException("User profile not found in database")
+        }
         true
     }
 
@@ -61,6 +69,11 @@ class AuthRepository(
 
     fun addAuthStateListener(listener: (FirebaseAuth) -> Unit) {
         auth.addAuthStateListener(listener)
+    }
+
+    suspend fun getCurrentUserProfile(uid: String): Any? {
+        val doc = db.collection("users").document(uid).get().await()
+        return if (doc.exists()) doc.data else null
     }
 }
 

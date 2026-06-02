@@ -1,5 +1,6 @@
 package com.example.gaetdriver.features.profile.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -38,7 +39,11 @@ fun BodyContent(authManager: AuthManager) {
 
     LaunchedEffect(userId) {
         userId?.let { uid ->
-            profile = portfolioRepo.getProfile(uid)
+            try {
+                profile = portfolioRepo.getProfile(uid)
+            } catch (_: Exception) {
+                // Ignore profile fetch errors here, profile will remain null
+            }
         }
     }
 
@@ -117,9 +122,13 @@ fun BodyContent(authManager: AuthManager) {
                             )
                             updated?.let {
                                 scope.launch {
-                                    userId?.let { uid -> portfolioRepo.saveProfile(uid, it) }
-                                    profile = it
-                                    isEditing = false
+                                    try {
+                                        userId?.let { uid -> portfolioRepo.saveProfile(uid, it) }
+                                        profile = it
+                                        isEditing = false
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                    }
                                 }
                             }
                         },

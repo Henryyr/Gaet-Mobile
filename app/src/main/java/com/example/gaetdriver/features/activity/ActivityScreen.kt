@@ -23,7 +23,6 @@ import com.example.gaetdriver.core.ui.components.SectionHeader
 import com.example.gaetdriver.core.ui.layout.ViewLayout
 import androidx.compose.ui.platform.LocalConfiguration
 import java.text.SimpleDateFormat
-import java.util.*
 
 @Composable
 fun ActivityScreen() {
@@ -67,11 +66,15 @@ fun ActivityScreen() {
 fun ActivityItem(log: ActivityLog) {
     val locale = LocalConfiguration.current.locales[0]
     val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm", locale)
-    val dateString = sdf.format(Date(log.createdAt))
+    val dateString = try {
+        sdf.format(log.createdAt.toDate())
+    } catch (_: Exception) {
+        "Unknown date"
+    }
 
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp).width(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -80,7 +83,6 @@ fun ActivityItem(log: ActivityLog) {
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
-            Spacer(modifier = Modifier.width(16.dp))
             Column {
                 Text(
                     text = log.title,

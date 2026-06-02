@@ -1,5 +1,6 @@
 package com.example.gaetdriver.core.data.model
 
+import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Exclude
 import com.google.firebase.firestore.PropertyName
 
@@ -16,5 +17,5 @@ data class CatalogItem(
     @get:PropertyName("imageBase64") @set:PropertyName("imageBase64")
     var imageBase64: String? = null,
     @get:PropertyName("created_at") @set:PropertyName("created_at")
-    var createdAt: Long = System.currentTimeMillis(),
+    var createdAt: Timestamp = Timestamp.now(),
 )
