@@ -8,6 +8,7 @@ import com.example.gaetdriver.core.data.model.AuthState
 import com.example.gaetdriver.core.data.model.LoginRequest
 import com.example.gaetdriver.core.data.model.RegisterRequest
 import com.example.gaetdriver.core.data.repository.AuthRepository
+import com.example.gaetdriver.core.utils.DeviceManager
 import com.example.gaetdriver.features.login.domain.LoginUseCase
 import com.example.gaetdriver.features.login.domain.SignUpUseCase
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +21,8 @@ import kotlinx.coroutines.launch
  * A manager class to handle UI state for Authentication.
  */
 class AuthManager(
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
+    private val deviceManager: DeviceManager
 ) {
     private val repository: AuthRepository = AuthRepository()
     private val loginUseCase: LoginUseCase = LoginUseCase(repository)
@@ -28,6 +30,9 @@ class AuthManager(
 
     private val _isLoggedIn = MutableStateFlow(repository.isUserLoggedIn())
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
+    private val _isValidating = MutableStateFlow(false)
+    val isValidating: StateFlow<Boolean> = _isValidating.asStateFlow()
 
     val currentUserId: String? get() = repository.getCurrentUserId()
 
@@ -73,6 +78,10 @@ class AuthManager(
             }
             is Resource.Success -> {
                 _state.value = _state.value.copy(isLoading = false, isSuccess = true)
+                // Record login time for 1-day session policy
+                scope.launch {
+                    deviceManager.saveLoginTime(System.currentTimeMillis())
+                }
             }
             is Resource.Error -> {
                 _state.value = _state.value.copy(isLoading = false, error = resource.message)
@@ -82,7 +91,10 @@ class AuthManager(
     }
 
     fun signOut() {
-        repository.signOut()
+        scope.launch {
+            deviceManager.clearLoginTime()
+            repository.signOut()
+        }
     }
 
     fun clearError() {
@@ -91,14 +103,29 @@ class AuthManager(
 
     fun validateSession() {
         val uid = currentUserId ?: return
+        _isValidating.value = true
         scope.launch {
             try {
+                // 1. Check if user still exists in Firestore (SERVER check)
                 val profile = repository.getCurrentUserProfile(uid)
                 if (profile == null) {
                     signOut()
+                    return@launch
+                }
+
+                // 2. Check 1-day session expiry
+                val lastLogin = deviceManager.getLoginTime()
+                val currentTime = System.currentTimeMillis()
+                val oneDayMillis = 24 * 60 * 60 * 1000L
+
+                if (lastLogin == 0L || currentTime - lastLogin > oneDayMillis) {
+                    signOut()
                 }
             } catch (_: Exception) {
-                // Ignore network errors during background validation
+                // If there's an error (like database deleted/permission denied), kick them out for safety
+                signOut()
+            } finally {
+                _isValidating.value = false
             }
         }
     }
@@ -109,6 +136,8 @@ class AuthManager(
  */
 @Composable
 fun rememberAuthManager(): AuthManager {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    return remember(scope) { AuthManager(scope) }
+    val deviceManager = remember { DeviceManager(context) }
+    return remember(scope, deviceManager) { AuthManager(scope, deviceManager) }
 }

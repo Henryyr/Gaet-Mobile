@@ -170,13 +170,17 @@ fun LibraryScreen() {
             onConfirm = {
                 selectedItem.value?.let { item ->
                     scope.launch {
-                        portfolioRepo.deleteCatalogItem(item.id)
-                        portfolioRepo.logActivity(
-                            userId = userId ?: "",
-                            type = "DELETE",
-                            title = "Deleted Trip",
-                            description = "Deleted trip: ${item.title}"
-                        )
+                        try {
+                            portfolioRepo.deleteCatalogItem(item.id)
+                            portfolioRepo.logActivity(
+                                userId = userId ?: "",
+                                type = "DELETE",
+                                title = "Deleted Trip",
+                                description = "Deleted trip: ${item.title}"
+                            )
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Delete failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
                 showDeleteDialog.value = false

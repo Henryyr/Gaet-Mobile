@@ -1,5 +1,6 @@
 package com.example.gaetdriver.core.data.repository
 
+import android.util.Log
 import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.Resource
 import com.google.firebase.Firebase
@@ -7,6 +8,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.tasks.await
@@ -22,11 +24,11 @@ class AuthRepository(
         val authResult = auth.signInWithEmailAndPassword(email, password).await()
         val userId = authResult.user?.uid ?: throw AppException.AuthException("Login failed")
 
-        // Verify Firestore document exists
-        val doc = db.collection("users").document(userId).get().await()
+        // Force SERVER fetch to bypass local cache
+        val doc = db.collection("users").document(userId).get(Source.SERVER).await()
         if (!doc.exists()) {
             auth.signOut()
-            throw AppException.AuthException("User profile not found in database")
+            throw AppException.AuthException("User profile not found. The account might have been deleted from the database.")
         }
         true
     }
@@ -41,17 +43,23 @@ class AuthRepository(
         val result = auth.createUserWithEmailAndPassword(email, password).await()
         val userId = result.user?.uid ?: throw AppException.AuthException("Registration failed")
         
-        val userData = hashMapOf(
-            "first_name" to firstName,
-            "last_name" to lastName,
-            "email" to email,
-            "phone" to phone,
-            "is_active" to true,
-            "created_at" to Timestamp.now(),
-            "update_at" to Timestamp.now()
-        )
-        
-        db.collection("users").document(userId).set(userData).await()
+        try {
+            val userData = hashMapOf(
+                "first_name" to firstName,
+                "last_name" to lastName,
+                "email" to email,
+                "phone" to phone,
+                "is_active" to true,
+                "created_at" to Timestamp.now(),
+                "update_at" to Timestamp.now()
+            )
+            
+            db.collection("users").document(userId).set(userData).await()
+        } catch (e: Exception) {
+            // If Firestore fails, we should ideally delete the Auth user to allow retry
+            result.user?.delete()?.await()
+            throw AppException.AuthException("Could not create profile: ${e.localizedMessage}")
+        }
         true
     }
 
@@ -72,7 +80,8 @@ class AuthRepository(
     }
 
     suspend fun getCurrentUserProfile(uid: String): Any? {
-        val doc = db.collection("users").document(uid).get().await()
+        // Force SERVER fetch to bypass local cache
+        val doc = db.collection("users").document(uid).get(Source.SERVER).await()
         return if (doc.exists()) doc.data else null
     }
 }
@@ -85,6 +94,7 @@ private fun <T> safeCall(action: suspend () -> T): Flow<Resource<T>> = kotlinx.c
     try {
         emit(Resource.Success(action()))
     } catch (e: Exception) {
+        Log.e("AuthRepository", "Operation failed", e)
         emit(Resource.Error(e.localizedMessage ?: "Unknown Error"))
     }
 }
