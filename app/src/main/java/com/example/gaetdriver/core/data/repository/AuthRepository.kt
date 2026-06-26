@@ -50,6 +50,7 @@ class AuthRepository(
                 "email" to email,
                 "phone" to phone,
                 "is_active" to true,
+                "onboarding_completed" to false,
                 "created_at" to Timestamp.now(),
                 "update_at" to Timestamp.now()
             )

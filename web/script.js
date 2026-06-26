@@ -1,7 +1,7 @@
 /**
  * Driver Guide Portfolio - Core Logic
  * Handles component loading, Firebase integration, and UI rendering.
- * Optimized for modularity and absolute paths.
+ * Updated to support dynamic onboarding data (tagline, services, vehicle).
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await utils.loadComponent('/components/catalog.html', 'catalog-container');
     await utils.loadComponent('/components/footer.html', 'footer-container');
 
-    // UI ELEMENTS
+    // UI ELEMENTS (Mapped after components are fully injected)
     const ui = {
         name: document.getElementById('driver-name'),
         location: document.getElementById('driver-location'),
@@ -48,7 +48,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         loading: document.getElementById('loading-state'),
         grid: document.getElementById('catalog-grid'),
         empty: document.getElementById('empty-state'),
-        search: document.getElementById('search-input')
+        search: document.getElementById('search-input'),
+
+        // Portfolio Specifics
+        tagline: document.getElementById('web-tagline'),
+        vehicle: document.getElementById('web-vehicle-info'),
+        services: document.getElementById('web-services-list')
     };
 
     // 3. WIDGETS
@@ -56,9 +61,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         catalogCard: (item) => {
             const title = utils.escape(item.title || "Trip");
             const dateStr = utils.formatDate(item.created_at);
-
             const price = utils.formatCurrency(item.price);
-            const desc = utils.escape(item.description || "Personalized travel experience with a local driver guide.");
+            const desc = utils.escape(item.description || "Personalized travel experience.");
             const image = item.imageBase64 ? `data:image/jpeg;base64,${item.imageBase64}` : 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80';
 
             return `
@@ -76,6 +80,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <button class="catalog-card__btn">Explore Details</button>
                     </div>
                 </article>
+            `;
+        },
+
+        serviceItem: (name, index) => {
+            const colors = ['dot--green', 'dot--orange', 'dot--brown'];
+            const color = colors[index % colors.length];
+            return `
+                <div class="profile-list__item">
+                    <span class="dot ${color}"></span>
+                    <div>
+                        <h3>${utils.escape(name)}</h3>
+                    </div>
+                </div>
             `;
         }
     };
@@ -106,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         state: { catalog: [] },
         fetchData: async (uid) => {
             try {
+                // Fetch User Profile
                 const userDoc = await db.collection("users").doc(uid).get();
                 if (userDoc.exists) {
                     const d = userDoc.data();
@@ -114,7 +132,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (ui.bio) ui.bio.innerText = d.bio || "Crafting memorable journeys.";
                     if (ui.location) ui.location.innerHTML = `📍 ${utils.escape(d.location || 'Indonesia')}`;
                     document.title = `${fullName} - Portfolio`;
+
+                    // Update Onboarding-defined content
+                    if (ui.tagline) ui.tagline.innerText = d.tagline || "Flexible private driver guide.";
+                    if (ui.vehicle) ui.vehicle.innerText = d.vehicle ? `Vehicle: ${d.vehicle}` : "Flexible transportation options.";
+
+                    if (ui.services && d.services && d.services.length > 0) {
+                        ui.services.innerHTML = d.services.map((s, i) => components.serviceItem(s, i)).join('');
+                    } else if (ui.services) {
+                        ui.services.innerHTML = ["Flexible Route", "Local Assistance"].map((s, i) => components.serviceItem(s, i)).join('');
+                    }
                 }
+
+                // Fetch Catalog Items
                 const snap = await db.collection("catalog").where("userId", "==", uid).get();
                 actions.state.catalog = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 actions.renderCatalog(actions.state.catalog);

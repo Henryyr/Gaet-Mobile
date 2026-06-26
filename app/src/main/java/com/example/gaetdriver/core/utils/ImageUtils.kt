@@ -3,20 +3,20 @@ package com.example.gaetdriver.core.utils
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.LruCache
 import java.io.ByteArrayOutputStream
 import androidx.core.graphics.scale
 
-/**
- * Utility to handle image encoding for Firestore (saving Storage costs).
- * Note: Firestore document limit is 1MB. Images are compressed and resized.
- */
+
 object ImageUtils {
 
-    /**
-     * Encodes a Bitmap to a Base64 string.
-     * Increased maxDimension to 1600 for high-quality display.
-     * Firestore limit is 1MB (~1.3M Base64 chars), this should stay around 400-600KB.
-     */
+    private val memoryCache = object : LruCache<Int, Bitmap>((Runtime.getRuntime().maxMemory() / 8).toInt()) {
+        override fun sizeOf(key: Int, bitmap: Bitmap): Int {
+            return bitmap.byteCount
+        }
+    }
+
+
     fun encodeToBase64(bitmap: Bitmap, quality: Int = 85, maxDimension: Int = 1600): String {
         val scaledBitmap = scaleBitmap(bitmap, maxDimension)
         val byteArrayOutputStream = ByteArrayOutputStream()
@@ -25,13 +25,23 @@ object ImageUtils {
         return Base64.encodeToString(byteArray, Base64.DEFAULT)
     }
 
-    /**
-     * Decodes a Base64 string back to a Bitmap.
-     */
+
     fun decodeFromBase64(base64String: String): Bitmap? {
+        val key = base64String.hashCode()
+        val cached = memoryCache.get(key)
+        if (cached != null) return cached
+
+        return try {
             val decodedBytes = Base64.decode(base64String, Base64.DEFAULT)
             val result = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-            return result
+            if (result != null) {
+                memoryCache.put(key, result)
+            }
+            result
+        } catch (e: Exception) {
+            android.util.Log.e("ImageUtils", "Decoding failed", e)
+            null
+        }
     }
 
     private fun scaleBitmap(bitmap: Bitmap, maxDimension: Int): Bitmap {
@@ -53,5 +63,9 @@ object ImageUtils {
         }
 
         return bitmap.scale(newWidth, newHeight)
+    }
+    
+    fun clearCache() {
+        memoryCache.evictAll()
     }
 }

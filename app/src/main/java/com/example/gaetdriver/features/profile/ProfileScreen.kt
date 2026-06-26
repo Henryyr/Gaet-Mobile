@@ -17,6 +17,7 @@ import com.example.gaetdriver.core.ui.components.*
 import com.example.gaetdriver.core.ui.layout.ViewLayout
 import com.example.gaetdriver.features.profile.ui.BodyContent
 import com.example.gaetdriver.core.utils.DeviceManager
+import com.example.gaetdriver.features.onboarding.ui.PortfolioSetupContent
 import com.example.gaetdriver.features.profile.ui.ProfileMenuButton
 import com.example.gaetdriver.features.profile.ui.ProfileToggleItem
 import com.example.gaetdriver.features.profile.ui.ThemeOptionItem
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 
 /**
  * Main Profile Screen with modular menu buttons.
- * Refactored to explicit MutableState to resolve "Assigned value is never read" warnings.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +41,7 @@ fun ProfileScreen(authManager: AuthManager) {
     
     // UI Local States
     val showEditProfile = remember { mutableStateOf(false) }
+    val showPortfolioSetup = remember { mutableStateOf(false) }
     val showThemeSheet = remember { mutableStateOf(false) }
     val showLanguageSheet = remember { mutableStateOf(false) }
 
@@ -59,20 +60,28 @@ fun ProfileScreen(authManager: AuthManager) {
                 // 1. Driver Portfolio settings
                 ProfileMenuButton(
                     title = "Driver Bio & Info",
-                    subtitle = "Manage your portfolio identity",
+                    subtitle = "Manage your identity",
                     icon = Icons.Default.Badge,
                     onClick = { showEditProfile.value = true }
                 )
 
-                // 2. Language selection
+                // 2. Portfolio Web Setup
+                ProfileMenuButton(
+                    title = "Web Portfolio Setup",
+                    subtitle = "Questions that define your web page",
+                    icon = Icons.Default.Language,
+                    onClick = { showPortfolioSetup.value = true }
+                )
+
+                // 3. Language selection
                 ProfileMenuButton(
                     title = "App Language",
                     subtitle = if (userLang == "id") "Bahasa Indonesia" else "English",
-                    icon = Icons.Default.Language,
+                    icon = Icons.Default.Translate,
                     onClick = { showLanguageSheet.value = true }
                 )
 
-                // 3. Theme preference
+                // 4. Theme preference
                 ProfileMenuButton(
                     title = strings.themePreference,
                     subtitle = "Current: ${themeMode.replaceFirstChar { it.uppercase() }}",
@@ -80,7 +89,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     onClick = { showThemeSheet.value = true }
                 )
 
-                // 4. Swipe navigation toggle
+                // 5. Swipe navigation toggle
                 ProfileToggleItem(
                     title = "Swipe Navigation",
                     subtitle = "Enable/Disable side swiping",
@@ -99,7 +108,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        contentColor = MaterialTheme.colorScheme.error
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 ) {
@@ -118,6 +127,20 @@ fun ProfileScreen(authManager: AuthManager) {
         ) {
             Box(modifier = Modifier.fillMaxHeight(0.9f).padding(16.dp)) {
                 BodyContent(authManager = authManager)
+            }
+        }
+    }
+
+    if (showPortfolioSetup.value) {
+        ModalBottomSheet(
+            onDismissRequest = { showPortfolioSetup.value = false },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ) {
+            Box(modifier = Modifier.fillMaxHeight(0.9f)) {
+                PortfolioSetupContent(
+                    userId = authManager.currentUserId ?: "",
+                    onComplete = { showPortfolioSetup.value = false }
+                )
             }
         }
     }

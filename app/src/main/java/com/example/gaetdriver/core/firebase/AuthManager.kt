@@ -95,6 +95,7 @@ class AuthManager(
     fun signOut() {
         scope.launch {
             deviceManager.clearLoginTime()
+            com.example.gaetdriver.core.utils.ImageUtils.clearCache()
             repository.signOut()
         }
     }
@@ -140,7 +141,6 @@ class AuthManager(
             } catch (e: Exception) {
                 val appEx = AppException.from(e)
                 Log.e("AuthManager", "Validation error: ${appEx.errorMessage}")
-                // Only sign out on non-network critical errors (e.g. Permission Denied)
                 if (appEx !is AppException.NetworkException) {
                     signOut()
                 }

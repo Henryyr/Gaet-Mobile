@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 
 /**
  * A standardized way to display images with placeholders.
- * Optimized with background decoding for Base64 to prevent UI stutter.
+ * Optimized with background decoding and caching for Base64 strings.
  */
 @Composable
 fun AppImage(
@@ -36,7 +36,6 @@ fun AppImage(
 
     LaunchedEffect(model) {
         if (model is String && model.length > 100) {
-            // Decode Base64 on IO thread to keep UI smooth
             displayModel = withContext(Dispatchers.IO) {
                 ImageUtils.decodeFromBase64(model)
             }

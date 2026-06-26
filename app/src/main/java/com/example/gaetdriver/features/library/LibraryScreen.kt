@@ -60,7 +60,7 @@ fun LibraryScreen() {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        items(catalogItems) { item ->
+                        items(items = catalogItems, key = { it.id }) { item ->
                             AppImage(
                                 model = item.imageBase64,
                                 modifier = Modifier

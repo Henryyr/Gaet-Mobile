@@ -23,6 +23,7 @@ import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.base.i18n.rememberStrings
 import com.example.gaetdriver.core.data.model.CatalogItem
+import com.example.gaetdriver.core.data.model.DriverProfile
 import com.example.gaetdriver.core.data.repository.rememberPortfolioRepository
 import com.example.gaetdriver.core.firebase.rememberAuthManager
 import com.example.gaetdriver.core.ui.components.*
@@ -31,6 +32,7 @@ import com.example.gaetdriver.core.utils.DeviceManager
 import com.example.gaetdriver.core.utils.ImageUtils
 import com.example.gaetdriver.core.utils.rememberMediaManager
 import com.example.gaetdriver.features.login.LoginScreen
+import com.example.gaetdriver.features.onboarding.OnboardingScreen
 import com.example.gaetdriver.navigation.AppNavHost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -58,9 +60,21 @@ fun GaetDriverApp() {
     val isLoggedIn by authManager.isLoggedIn.collectAsState()
     val isValidating by authManager.isValidating.collectAsState()
 
+    val portfolioRepo = rememberPortfolioRepository()
+    var userProfile by remember { mutableStateOf<DriverProfile?>(null) }
+    var isLoadingProfile by remember { mutableStateOf(false) }
+
     LaunchedEffect(isLoggedIn) {
         if (isLoggedIn) {
             authManager.validateSession()
+            val uid = authManager.currentUserId
+            if (uid != null) {
+                isLoadingProfile = true
+                userProfile = portfolioRepo.getProfile(uid)
+                isLoadingProfile = false
+            }
+        } else {
+            userProfile = null
         }
     }
 
@@ -76,13 +90,25 @@ fun GaetDriverApp() {
 
     CompositionLocalProvider(LocalStrings provides strings) {
         GaetDriverTheme(darkTheme = darkTheme) {
-            if (isValidating) {
+            if (isValidating || isLoadingProfile) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
                 }
+            } else if (!isLoggedIn) {
+                LoginScreen(authManager = authManager)
+            } else if (userProfile != null && !userProfile!!.onboardingCompleted) {
+                OnboardingScreen(
+                    userId = authManager.currentUserId ?: "",
+                    onComplete = {
+                        // Refresh profile after onboarding
+                        isLoadingProfile = true
+                        userProfile = userProfile?.copy(onboardingCompleted = true)
+                        isLoadingProfile = false
+                    }
+                )
             } else {
                 val showAddOptions = remember { mutableStateOf(false) }
                 val showDetailsDialog = remember { mutableStateOf(false) }
@@ -92,7 +118,6 @@ fun GaetDriverApp() {
                 // PagerState is now the SINGLE Source of Truth for navigation
                 val pagerState = rememberPagerState(pageCount = { 4 })
 
-                val portfolioRepo = rememberPortfolioRepository()
                 val scope = rememberCoroutineScope()
 
                 val mediaManager = rememberMediaManager(
@@ -162,136 +187,130 @@ fun GaetDriverApp() {
                     }
                 )
 
-                if (!isLoggedIn) {
-                    LoginScreen(authManager = authManager)
-                } else {
-                    Row(modifier = Modifier.fillMaxSize()) {
-                        if (isExpanded) {
-                            BottomBarNavigation(
-                                pagerState = pagerState,
-                                windowSizeClass = adaptiveInfo.windowSizeClass,
-                                onAddClick = { showAddOptions.value = true }
+                Row(modifier = Modifier.fillMaxSize()) {
+                    if (isExpanded) {
+                        BottomBarNavigation(
+                            pagerState = pagerState,
+                            windowSizeClass = adaptiveInfo.windowSizeClass,
+                            onAddClick = { showAddOptions.value = true }
+                        )
+                    }
+
+                    Scaffold(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        bottomBar = {
+                            if (!isExpanded) {
+                                BottomBarNavigation(
+                                    pagerState = pagerState,
+                                    windowSizeClass = adaptiveInfo.windowSizeClass,
+                                    onAddClick = { showAddOptions.value = true }
+                                )
+                            }
+                        }
+                    ) { innerPadding ->
+                        AppNavHost(
+                            authManager = authManager,
+                            pagerState = pagerState,
+                            modifier = Modifier
+                                .padding(innerPadding)
+                                .fillMaxSize()
+                        )
+
+                        if (showAddOptions.value) {
+                            AddOptionsBottomSheet(
+                                sheetState = rememberModalBottomSheetState(),
+                                onDismissRequest = { showAddOptions.value = false },
+                                onCameraClick = {
+                                    mediaManager.launchCamera()
+                                    showAddOptions.value = false
+                                },
+                                onGalleryClick = {
+                                    mediaManager.launchGallery()
+                                    showAddOptions.value = false
+                                }
                             )
                         }
 
-                        Scaffold(
-                            modifier = Modifier.weight(1f).fillMaxHeight(),
-                            bottomBar = {
-                                if (!isExpanded) {
-                                    BottomBarNavigation(
-                                        pagerState = pagerState,
-                                        windowSizeClass = adaptiveInfo.windowSizeClass,
-                                        onAddClick = { showAddOptions.value = true }
-                                    )
-                                }
-                            }
-                        ) { innerPadding ->
-                            // AppNavHost now DIRECTLY hosts the Pager without standard NavHost
-                            // ensuring 100% smooth transitions without jumping.
-                            AppNavHost(
-                                authManager = authManager,
-                                pagerState = pagerState,
-                                modifier = Modifier
-                                    .padding(innerPadding)
-                                    .fillMaxSize()
-                            )
+                        if (showDetailsDialog.value && pendingImage.value != null) {
+                            var tripTitle by remember { mutableStateOf("") }
+                            var tripPrice by remember { mutableStateOf("") }
 
-                            if (showAddOptions.value) {
-                                AddOptionsBottomSheet(
-                                    sheetState = rememberModalBottomSheetState(),
-                                    onDismissRequest = { showAddOptions.value = false },
-                                    onCameraClick = {
-                                        mediaManager.launchCamera()
-                                        showAddOptions.value = false
-                                    },
-                                    onGalleryClick = {
-                                        mediaManager.launchGallery()
-                                        showAddOptions.value = false
+                            AlertDialog(
+                                onDismissRequest = {
+                                    if (!isUploading.value) {
+                                        showDetailsDialog.value = false
+                                        pendingImage.value = null
                                     }
-                                )
-                            }
-
-                            if (showDetailsDialog.value && pendingImage.value != null) {
-                                var tripTitle by remember { mutableStateOf("") }
-                                var tripPrice by remember { mutableStateOf("") }
-
-                                AlertDialog(
-                                    onDismissRequest = {
-                                        if (!isUploading.value) {
-                                            showDetailsDialog.value = false
-                                            pendingImage.value = null
-                                        }
-                                    },
-                                    title = { Text("Trip Details") },
-                                    text = {
-                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            AppTextField(
-                                                value = tripTitle,
-                                                onValueChange = { tripTitle = it },
-                                                label = "Title (e.g. Bali Tour)",
-                                                enabled = !isUploading.value
-                                            )
-                                            AppTextField(
-                                                value = tripPrice,
-                                                onValueChange = { tripPrice = it },
-                                                label = "Price (e.g. 500000)",
-                                                enabled = !isUploading.value
-                                            )
-                                        }
-                                    },
-                                    confirmButton = {
-                                        AppButton(
-                                            text = "Save",
-                                            isLoading = isUploading.value,
-                                            onClick = {
-                                                val bitmap = pendingImage.value ?: return@AppButton
-                                                isUploading.value = true
-                                                scope.launch {
-                                                    try {
-                                                        val uid = authManager.currentUserId ?: return@launch
-                                                        val base64 = withContext(Dispatchers.Default) {
-                                                            ImageUtils.encodeToBase64(bitmap)
-                                                        }
-                                                        portfolioRepo.addCatalogItem(
-                                                            CatalogItem(
-                                                                userId = uid,
-                                                                title = tripTitle,
-                                                                price = tripPrice.toDoubleOrNull() ?: 0.0,
-                                                                imageBase64 = base64
-                                                            )
-                                                        )
-                                                        portfolioRepo.logActivity(
-                                                            userId = uid,
-                                                            type = "UPLOAD",
-                                                            title = "Uploaded new Trip",
-                                                            description = "Trip: $tripTitle"
-                                                        )
-                                                        // Instant jump to Library (Index 2) for performance
-                                                        pagerState.scrollToPage(2)
-                                                    } catch (e: Exception) {
-                                                        val appException = AppException.from(e)
-                                                        Toast.makeText(context, "Failed to save: ${appException.errorMessage}", Toast.LENGTH_LONG).show()
-                                                    } finally {
-                                                        isUploading.value = false
-                                                        showDetailsDialog.value = false
-                                                        pendingImage.value = null
+                                },
+                                title = { Text("Trip Details") },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AppTextField(
+                                            value = tripTitle,
+                                            onValueChange = { tripTitle = it },
+                                            label = "Title (e.g. Bali Tour)",
+                                            enabled = !isUploading.value
+                                        )
+                                        AppTextField(
+                                            value = tripPrice,
+                                            onValueChange = { tripPrice = it },
+                                            label = "Price (e.g. 500000)",
+                                            enabled = !isUploading.value
+                                        )
+                                    }
+                                },
+                                confirmButton = {
+                                    AppButton(
+                                        text = "Save",
+                                        isLoading = isUploading.value,
+                                        onClick = {
+                                            val bitmap = pendingImage.value ?: return@AppButton
+                                            isUploading.value = true
+                                            scope.launch {
+                                                try {
+                                                    val uid = authManager.currentUserId ?: return@launch
+                                                    val base64 = withContext(Dispatchers.Default) {
+                                                        ImageUtils.encodeToBase64(bitmap)
                                                     }
+                                                    portfolioRepo.addCatalogItem(
+                                                        CatalogItem(
+                                                            userId = uid,
+                                                            title = tripTitle,
+                                                            price = tripPrice.toDoubleOrNull() ?: 0.0,
+                                                            imageBase64 = base64
+                                                        )
+                                                    )
+                                                    portfolioRepo.logActivity(
+                                                        userId = uid,
+                                                        type = "UPLOAD",
+                                                        title = "Uploaded new Trip",
+                                                        description = "Trip: $tripTitle"
+                                                    )
+                                                    // Instant jump to Library (Index 2) for performance
+                                                    pagerState.scrollToPage(2)
+                                                } catch (e: Exception) {
+                                                    val appException = AppException.from(e)
+                                                    Toast.makeText(context, "Failed to save: ${appException.errorMessage}", Toast.LENGTH_LONG).show()
+                                                } finally {
+                                                    isUploading.value = false
+                                                    showDetailsDialog.value = false
+                                                    pendingImage.value = null
                                                 }
                                             }
-                                        )
-                                    },
-                                    dismissButton = {
-                                        if (!isUploading.value) {
-                                            TextButton(onClick = {
-                                                showDetailsDialog.value = false
-                                                pendingImage.value = null
-                                            }) {
-                                                Text("Cancel")
-                                            }
+                                        }
+                                    )
+                                },
+                                dismissButton = {
+                                    if (!isUploading.value) {
+                                        TextButton(onClick = {
+                                            showDetailsDialog.value = false
+                                            pendingImage.value = null
+                                        }) {
+                                            Text("Cancel")
                                         }
                                     }
-                                )
-                            }
+                                }
+                            )
                         }
                     }
                 }

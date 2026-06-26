@@ -22,6 +22,13 @@ data class DriverProfile(
     var updatedAt: Timestamp? = null,
     var bio: String = "",
     var location: String = "",
+    
+    @get:PropertyName("onboarding_completed") @set:PropertyName("onboarding_completed")
+    var onboardingCompleted: Boolean = false,
+    var tagline: String = "",
+    var vehicle: String = "",
+    var services: List<String> = emptyList(),
+    var experience: String = "",
 ) {
     @get:Exclude
     val fullName: String get() = "$firstName $lastName".trim()
