@@ -103,13 +103,24 @@ class AuthManager(
         _state.value = _state.value.copy(error = null)
     }
 
+
     fun validateSession() {
         val uid = currentUserId ?: return
         _isValidating.value = true
         scope.launch {
             try {
-                // 1. Check if user still exists in Firestore (SERVER check)
-                val profile = repository.getCurrentUserProfile(uid)
+                val profile = try {
+                    repository.getCurrentUserProfile(uid)
+                } catch (e: Exception) {
+                    val appEx = AppException.from(e)
+                    if (appEx is AppException.NetworkException) {
+                        // If offline, assume session is valid to allow offline access
+                        "OFFLINE_VALID" 
+                    } else {
+                        throw e
+                    }
+                }
+
                 if (profile == null) {
                     signOut()
                     return@launch
@@ -120,13 +131,19 @@ class AuthManager(
                 val currentTime = System.currentTimeMillis()
                 val oneDayMillis = 24 * 60 * 60 * 1000L
 
-                if (lastLogin == 0L || (currentTime - lastLogin) > oneDayMillis) {
+                if (lastLogin == 0L) {
+                    // Initialize if missing (e.g. after update)
+                    deviceManager.saveLoginTime(currentTime)
+                } else if ((currentTime - lastLogin) > oneDayMillis) {
                     signOut()
                 }
             } catch (e: Exception) {
-                // If there's an error (like database deleted/permission denied), kick them out for safety
-                Log.e("AuthManager", "Session validation failed: ${AppException.from(e).errorMessage}")
-                signOut()
+                val appEx = AppException.from(e)
+                Log.e("AuthManager", "Validation error: ${appEx.errorMessage}")
+                // Only sign out on non-network critical errors (e.g. Permission Denied)
+                if (appEx !is AppException.NetworkException) {
+                    signOut()
+                }
             } finally {
                 _isValidating.value = false
             }
