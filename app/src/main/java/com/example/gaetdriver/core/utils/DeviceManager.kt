@@ -16,9 +16,9 @@ private val Context.deviceDataStore: DataStore<Preferences> by preferencesDataSt
 class DeviceManager(private val context: Context) {
 
     companion object {
-        private val THEME_MODE_KEY = stringPreferencesKey("theme_mode") // "light", "dark", "system"
+        private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
         private val SWIPE_NAV_ENABLED_KEY = booleanPreferencesKey("swipe_nav_enabled")
-        private val LANGUAGE_KEY = stringPreferencesKey("app_language") // "en", "id"
+        private val LANGUAGE_KEY = stringPreferencesKey("app_language")
         private val LAST_LOGIN_TIME_KEY = longPreferencesKey("last_login_time")
     }
 
@@ -41,7 +41,7 @@ class DeviceManager(private val context: Context) {
     }
 
     val isSwipeNavEnabled: Flow<Boolean> = context.deviceDataStore.data.map { preferences ->
-        preferences[SWIPE_NAV_ENABLED_KEY] ?: true // Default to true
+        preferences[SWIPE_NAV_ENABLED_KEY] ?: true
     }
 
     // Language Settings
@@ -55,7 +55,7 @@ class DeviceManager(private val context: Context) {
         preferences[LANGUAGE_KEY]
     }
 
-    // Login Time Settings (For session validation)
+    // Login Time Settings
     suspend fun saveLoginTime(time: Long) {
         context.deviceDataStore.edit { preferences ->
             preferences[LAST_LOGIN_TIME_KEY] = time

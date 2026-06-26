@@ -30,7 +30,7 @@ import com.example.gaetdriver.core.ui.components.AppImage
 import com.example.gaetdriver.core.ui.components.EmptyState
 import com.example.gaetdriver.core.ui.components.SectionHeader
 import com.example.gaetdriver.core.ui.layout.ViewLayout
-import java.util.Locale
+import java.text.SimpleDateFormat
 
 @Composable
 fun HomeScreen() {
@@ -58,7 +58,7 @@ fun HomeScreen() {
                                 putExtra(Intent.EXTRA_SUBJECT, "My Portfolio")
                                 putExtra(
                                     Intent.EXTRA_TEXT,
-                                    "Check out my driver portfolio: https://gaetdriver.web.app/portfolio/$userId"
+                                    "Check out my driver portfolio: https://gaetdriver.web.app/portfolio/$userId",
                                 )
                             }
                             context.startActivity(Intent.createChooser(shareIntent, "Share Portfolio"))
@@ -135,6 +135,14 @@ fun HomeScreen() {
 
 @Composable
 fun CatalogCard(item: CatalogItem, onClick: () -> Unit) {
+    val locale = LocalConfiguration.current.locales[0]
+    val sdf = SimpleDateFormat("dd MMM yyyy", locale)
+    val formattedDate = try {
+        sdf.format(item.createdAt.toDate())
+    } catch (_: Exception) {
+        ""
+    }
+
     AppCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = onClick
@@ -158,21 +166,39 @@ fun CatalogCard(item: CatalogItem, onClick: () -> Unit) {
 
             Column(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
             ) {
-                Text(
-                    text = if (item.title.isBlank()) "Unnamed Trip" else item.title,
-                    style = MaterialTheme.typography.titleLarge,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = item.title.ifBlank { "Trip" },
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1
+                    )
+                    if (formattedDate.isNotEmpty()) {
+                        Text(
+                            text = formattedDate,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White.copy(alpha = 0.7f),
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                
                 if (item.price > 0) {
-                    val locale = LocalConfiguration.current.locales[0]
                     Text(
                         text = String.format(locale, "Rp %,.0f", item.price),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.9f)
+                        color = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                 }
             }

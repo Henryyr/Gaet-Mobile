@@ -58,7 +58,7 @@ class AuthRepository(
         } catch (e: Exception) {
             // If Firestore fails, we should ideally delete the Auth user to allow retry
             result.user?.delete()?.await()
-            throw AppException.AuthException("Could not create profile: ${e.localizedMessage}")
+            throw AppException.from(e)
         }
         true
     }
@@ -80,9 +80,13 @@ class AuthRepository(
     }
 
     suspend fun getCurrentUserProfile(uid: String): Any? {
-        // Force SERVER fetch to bypass local cache
-        val doc = db.collection("users").document(uid).get(Source.SERVER).await()
-        return if (doc.exists()) doc.data else null
+        try {
+            // Force SERVER fetch to bypass local cache
+            val doc = db.collection("users").document(uid).get(Source.SERVER).await()
+            return if (doc.exists()) doc.data else null
+        } catch (e: Exception) {
+            throw AppException.from(e)
+        }
     }
 }
 
@@ -95,6 +99,7 @@ private fun <T> safeCall(action: suspend () -> T): Flow<Resource<T>> = kotlinx.c
         emit(Resource.Success(action()))
     } catch (e: Exception) {
         Log.e("AuthRepository", "Operation failed", e)
-        emit(Resource.Error(e.localizedMessage ?: "Unknown Error"))
+        val appException = AppException.from(e)
+        emit(Resource.Error(appException.errorMessage))
     }
 }

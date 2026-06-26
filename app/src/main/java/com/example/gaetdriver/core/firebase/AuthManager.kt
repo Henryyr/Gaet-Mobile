@@ -1,8 +1,10 @@
 package com.example.gaetdriver.core.firebase
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.Resource
 import com.example.gaetdriver.core.data.model.AuthState
 import com.example.gaetdriver.core.data.model.LoginRequest
@@ -118,11 +120,12 @@ class AuthManager(
                 val currentTime = System.currentTimeMillis()
                 val oneDayMillis = 24 * 60 * 60 * 1000L
 
-                if (lastLogin == 0L || currentTime - lastLogin > oneDayMillis) {
+                if (lastLogin == 0L || (currentTime - lastLogin) > oneDayMillis) {
                     signOut()
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // If there's an error (like database deleted/permission denied), kick them out for safety
+                Log.e("AuthManager", "Session validation failed: ${AppException.from(e).errorMessage}")
                 signOut()
             } finally {
                 _isValidating.value = false

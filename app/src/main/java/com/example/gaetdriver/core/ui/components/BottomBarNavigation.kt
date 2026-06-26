@@ -67,7 +67,7 @@ fun BottomBarNavigation(
                 val isActive = pagerState.currentPage == index
                 val label = when(destination) {
                     AppNavDestinations.HOME -> strings.home
-                    AppNavDestinations.ACTIVITY -> strings.activity
+                    AppNavDestinations.ACTIVITY -> strings.preview
                     AppNavDestinations.LIBRARY -> strings.library
                     AppNavDestinations.PROFILE -> strings.profile
                     else -> ""

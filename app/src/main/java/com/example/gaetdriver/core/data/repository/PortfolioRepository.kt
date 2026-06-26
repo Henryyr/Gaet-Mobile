@@ -6,6 +6,7 @@ import com.example.gaetdriver.core.data.model.DriverProfile
 import com.google.firebase.firestore.FirebaseFirestore
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.example.gaetdriver.core.base.AppException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -59,7 +60,7 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
         try {
             usersCollection.document(uid).set(profile).await()
         } catch (e: Exception) {
-            throw e
+            throw AppException.from(e)
         }
     }
 
@@ -70,7 +71,7 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
         return try {
             usersCollection.document(uid).get().await().toObject(DriverProfile::class.java)
         } catch (e: Exception) {
-            null
+            throw AppException.from(e)
         }
     }
 
@@ -85,7 +86,7 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
                 catalogCollection.document(item.id).set(item).await()
             }
         } catch (e: Exception) {
-            throw e
+            throw AppException.from(e)
         }
     }
 
@@ -120,8 +121,8 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
         return try {
             val snapshot = catalogCollection.whereEqualTo("userId", userId).get().await()
             snapshot.size()
-        } catch (_: Exception) {
-            0
+        } catch (e: Exception) {
+            throw AppException.from(e)
         }
     }
     
@@ -134,7 +135,7 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
                 catalogCollection.document(itemId).delete().await()
             }
         } catch (e: Exception) {
-            throw e
+            throw AppException.from(e)
         }
     }
 }

@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const utils = {
         escape: (str) => String(str || "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])),
         formatCurrency: (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num || 0),
+        formatDate: (timestamp) => {
+            if (!timestamp) return "";
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp.seconds * 1000);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        },
         getUserId: () => {
             const params = new URLSearchParams(window.location.search);
             const qId = params.get('uid');
@@ -30,13 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 2. LOAD UI COMPONENTS (Sequential to maintain order)
-    // We use absolute paths (starting with /) to ensure they load regardless of URL depth
     await utils.loadComponent('/components/hero.html', 'hero-container');
     await utils.loadComponent('/components/profile.html', 'hero-container');
     await utils.loadComponent('/components/catalog.html', 'catalog-container');
     await utils.loadComponent('/components/footer.html', 'footer-container');
 
-    // UI ELEMENTS (Mapped after components are fully injected)
+    // UI ELEMENTS
     const ui = {
         name: document.getElementById('driver-name'),
         location: document.getElementById('driver-location'),
@@ -50,10 +54,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 3. WIDGETS
     const components = {
         catalogCard: (item) => {
-            const title = utils.escape(item.title || "Special Journey");
+            const title = utils.escape(item.title || "Trip");
+            const dateStr = utils.formatDate(item.created_at);
+
             const price = utils.formatCurrency(item.price);
             const desc = utils.escape(item.description || "Personalized travel experience with a local driver guide.");
             const image = item.imageBase64 ? `data:image/jpeg;base64,${item.imageBase64}` : 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80';
+
             return `
                 <article class="catalog-card">
                     <div class="catalog-card__media">
@@ -61,7 +68,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div class="catalog-card__price">${price}</div>
                     </div>
                     <div class="catalog-card__body">
-                        <h3 class="catalog-card__title">${title}</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+                            <h3 class="catalog-card__title" style="margin: 0;">${title}</h3>
+                            <span style="font-size: 0.75rem; color: #888;">${dateStr}</span>
+                        </div>
                         <p class="catalog-card__text">${desc}</p>
                         <button class="catalog-card__btn">Explore Details</button>
                     </div>

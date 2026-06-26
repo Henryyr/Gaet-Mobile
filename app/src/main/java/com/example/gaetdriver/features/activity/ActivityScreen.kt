@@ -74,7 +74,7 @@ fun ActivityItem(log: ActivityLog) {
 
     AppCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp).width(16.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
@@ -83,6 +83,7 @@ fun ActivityItem(log: ActivityLog) {
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )
+            Spacer(Modifier.width(16.dp))
             Column {
                 Text(
                     text = log.title,

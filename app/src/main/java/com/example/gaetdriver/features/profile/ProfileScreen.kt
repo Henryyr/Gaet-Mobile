@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Main Profile Screen with modular menu buttons.
+ * Refactored to explicit MutableState to resolve "Assigned value is never read" warnings.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,13 +36,13 @@ fun ProfileScreen(authManager: AuthManager) {
     
     // Observed Settings
     val themeMode by deviceManager.themeMode.collectAsState(initial = "system")
-    val isSwipeNavEnabled by deviceManager.isSwipeNavEnabled.collectAsState(initial = true)
+    val isSwipeNavEnabled by deviceManager.isSwipeNavEnabled.collectAsState(initial = false)
     val userLang by deviceManager.appLanguage.collectAsState(initial = null)
     
     // UI Local States
-    var showEditProfile by remember { mutableStateOf(false) }
-    var showThemeSheet by remember { mutableStateOf(false) }
-    var showLanguageSheet by remember { mutableStateOf(false) }
+    val showEditProfile = remember { mutableStateOf(false) }
+    val showThemeSheet = remember { mutableStateOf(false) }
+    val showLanguageSheet = remember { mutableStateOf(false) }
 
     ViewLayout(
         header = {
@@ -60,7 +61,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     title = "Driver Bio & Info",
                     subtitle = "Manage your portfolio identity",
                     icon = Icons.Default.Badge,
-                    onClick = { showEditProfile = true }
+                    onClick = { showEditProfile.value = true }
                 )
 
                 // 2. Language selection
@@ -68,7 +69,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     title = "App Language",
                     subtitle = if (userLang == "id") "Bahasa Indonesia" else "English",
                     icon = Icons.Default.Language,
-                    onClick = { showLanguageSheet = true }
+                    onClick = { showLanguageSheet.value = true }
                 )
 
                 // 3. Theme preference
@@ -76,7 +77,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     title = strings.themePreference,
                     subtitle = "Current: ${themeMode.replaceFirstChar { it.uppercase() }}",
                     icon = Icons.Default.Palette,
-                    onClick = { showThemeSheet = true }
+                    onClick = { showThemeSheet.value = true }
                 )
 
                 // 4. Swipe navigation toggle
@@ -98,7 +99,7 @@ fun ProfileScreen(authManager: AuthManager) {
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.error
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 ) {
@@ -110,10 +111,9 @@ fun ProfileScreen(authManager: AuthManager) {
         }
     )
 
-    // Modal Bottom Sheets
-    if (showEditProfile) {
+    if (showEditProfile.value) {
         ModalBottomSheet(
-            onDismissRequest = { showEditProfile = false },
+            onDismissRequest = { showEditProfile.value = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
             Box(modifier = Modifier.fillMaxHeight(0.9f).padding(16.dp)) {
@@ -122,35 +122,35 @@ fun ProfileScreen(authManager: AuthManager) {
         }
     }
 
-    if (showThemeSheet) {
-        ModalBottomSheet(onDismissRequest = { showThemeSheet = false }) {
+    if (showThemeSheet.value) {
+        ModalBottomSheet(onDismissRequest = { showThemeSheet.value = false }) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text("Select Theme", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
                 ThemeOptionItem("Light Mode", themeMode == "light") {
-                    scope.launch { deviceManager.saveThemeMode("light"); showThemeSheet = false }
+                    scope.launch { deviceManager.saveThemeMode("light"); showThemeSheet.value = false }
                 }
                 ThemeOptionItem("Dark Mode", themeMode == "dark") {
-                    scope.launch { deviceManager.saveThemeMode("dark"); showThemeSheet = false }
+                    scope.launch { deviceManager.saveThemeMode("dark"); showThemeSheet.value = false }
                 }
                 ThemeOptionItem("System Default", themeMode == "system") {
-                    scope.launch { deviceManager.saveThemeMode("system"); showThemeSheet = false }
+                    scope.launch { deviceManager.saveThemeMode("system"); showThemeSheet.value = false }
                 }
             }
         }
     }
 
-    if (showLanguageSheet) {
-        ModalBottomSheet(onDismissRequest = { showLanguageSheet = false }) {
+    if (showLanguageSheet.value) {
+        ModalBottomSheet(onDismissRequest = { showLanguageSheet.value = false }) {
             Column(modifier = Modifier.padding(16.dp).padding(bottom = 32.dp)) {
                 Text("Select Language", style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 16.dp))
                 ThemeOptionItem("English", userLang == "en") {
-                    scope.launch { deviceManager.saveLanguage("en"); showLanguageSheet = false }
+                    scope.launch { deviceManager.saveLanguage("en"); showLanguageSheet.value = false }
                 }
                 ThemeOptionItem("Bahasa Indonesia", userLang == "id") {
-                    scope.launch { deviceManager.saveLanguage("id"); showLanguageSheet = false }
+                    scope.launch { deviceManager.saveLanguage("id"); showLanguageSheet.value = false }
                 }
                 ThemeOptionItem("System Default", userLang == null || userLang == "") {
-                    scope.launch { deviceManager.saveLanguage(""); showLanguageSheet = false }
+                    scope.launch { deviceManager.saveLanguage(""); showLanguageSheet.value = false }
                 }
             }
         }

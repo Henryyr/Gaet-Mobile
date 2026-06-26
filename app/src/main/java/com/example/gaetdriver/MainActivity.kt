@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
+import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.base.i18n.rememberStrings
 import com.example.gaetdriver.core.data.model.CatalogItem
@@ -99,9 +100,15 @@ fun GaetDriverApp() {
                         uri?.let { u ->
                             scope.launch {
                                 val uid = authManager.currentUserId ?: return@launch
-                                val count = portfolioRepo.getUserItemCount(uid)
-                                if (count >= 6) {
-                                    Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                try {
+                                    val count = portfolioRepo.getUserItemCount(uid)
+                                    if (count >= 6) {
+                                        Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                        return@launch
+                                    }
+                                } catch (e: Exception) {
+                                    val appException = AppException.from(e)
+                                    Toast.makeText(context, appException.errorMessage, Toast.LENGTH_SHORT).show()
                                     return@launch
                                 }
 
@@ -125,9 +132,15 @@ fun GaetDriverApp() {
                         uri?.let { u ->
                             scope.launch {
                                 val uid = authManager.currentUserId ?: return@launch
-                                val count = portfolioRepo.getUserItemCount(uid)
-                                if (count >= 6) {
-                                    Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                try {
+                                    val count = portfolioRepo.getUserItemCount(uid)
+                                    if (count >= 6) {
+                                        Toast.makeText(context, "Limit reached!", Toast.LENGTH_SHORT).show()
+                                        return@launch
+                                    }
+                                } catch (e: Exception) {
+                                    val appException = AppException.from(e)
+                                    Toast.makeText(context, appException.errorMessage, Toast.LENGTH_SHORT).show()
                                     return@launch
                                 }
 
@@ -256,7 +269,8 @@ fun GaetDriverApp() {
                                                         // Instant jump to Library (Index 2) for performance
                                                         pagerState.scrollToPage(2)
                                                     } catch (e: Exception) {
-                                                        Toast.makeText(context, "Failed to save: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                                        val appException = AppException.from(e)
+                                                        Toast.makeText(context, "Failed to save: ${appException.errorMessage}", Toast.LENGTH_LONG).show()
                                                     } finally {
                                                         isUploading.value = false
                                                         showDetailsDialog.value = false

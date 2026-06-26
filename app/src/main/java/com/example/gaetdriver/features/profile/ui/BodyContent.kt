@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.core.data.repository.rememberPortfolioRepository
@@ -35,8 +36,9 @@ fun BodyContent(authManager: AuthManager) {
         userId?.let { uid ->
             try {
                 profile = portfolioRepo.getProfile(uid)
-            } catch (_: Exception) {
-                // Ignore profile fetch errors
+            } catch (e: Exception) {
+                val appException = AppException.from(e)
+                Toast.makeText(context, appException.errorMessage, Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -102,7 +104,8 @@ fun BodyContent(authManager: AuthManager) {
                                         profile = it
                                         isEditing = false
                                     } catch (e: Exception) {
-                                        Toast.makeText(context, "Update failed: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                        val appException = AppException.from(e)
+                                        Toast.makeText(context, "Update failed: ${appException.errorMessage}", Toast.LENGTH_LONG).show()
                                     }
                                 }
                             }
