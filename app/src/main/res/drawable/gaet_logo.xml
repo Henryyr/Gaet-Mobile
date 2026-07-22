@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <!-- Top Arc (Tertiary Green) -->
+    <path
+        android:fillColor="@color/tertiary_green"
+        android:pathData="M20,35 C35,45 65,45 80,35 L90,45 C70,65 30,65 10,45 Z" />
+
+    <!-- Middle Arc (Secondary Grey) -->
+    <path
+        android:fillColor="@color/secondary_grey"
+        android:pathData="M20,48 C35,58 65,58 80,48 L90,58 C70,78 30,78 10,58 Z" />
+
+    <!-- Bottom Arc (Primary Orange) -->
+    <path
+        android:fillColor="@color/primary_orange"
+        android:pathData="M20,61 C35,71 65,71 80,61 L90,71 C70,91 30,91 10,71 Z" />
+
+</vector>

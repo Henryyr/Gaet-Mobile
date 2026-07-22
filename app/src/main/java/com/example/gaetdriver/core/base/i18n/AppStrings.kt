@@ -1,11 +1,16 @@
 package com.example.gaetdriver.core.base.i18n
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import com.example.gaetdriver.core.utils.DeviceManager
 
 /**
- * Hand-rolled Type-Safe Localization (Stable alternative to Lyricist).
+ * Hand-rolled Type-Safe Localization.
  */
 interface AppStrings {
     val appName: String
@@ -23,7 +28,9 @@ interface AppStrings {
     val dontHaveAccount: String
     val alreadyHaveAccount: String
     val home: String
+
     val activity: String
+    val preview: String
     val library: String
     val profile: String
     val add: String
@@ -45,10 +52,15 @@ interface AppStrings {
     val chooseOption: String
     val takePhoto: String
     val chooseGallery: String
+    val delete: String
+    val edit: String
+    val cancel: String
+    val confirmDelete: String
+    val deleteMessage: String
 }
 
 val EnStrings = object : AppStrings {
-    override val appName = "LifeOS"
+    override val appName = "GAET"
     override val welcomeBack = "Welcome Back"
     override val registerHere = "Register Here"
     override val signInToContinue = "Sign in to continue"
@@ -64,6 +76,7 @@ val EnStrings = object : AppStrings {
     override val alreadyHaveAccount = "Already have an account? Login"
     override val home = "Home"
     override val activity = "Activity"
+    override val preview = "Web Preview"
     override val library = "Library"
     override val profile = "Profile"
     override val add = "Add"
@@ -85,11 +98,16 @@ val EnStrings = object : AppStrings {
     override val chooseOption = "Choose Option"
     override val takePhoto = "Take a Photo"
     override val chooseGallery = "Choose from Gallery"
+    override val delete = "Delete"
+    override val edit = "Edit"
+    override val cancel = "Cancel"
+    override val confirmDelete = "Confirm Delete"
+    override val deleteMessage = "Are you sure you want to delete this item?"
 }
 
 val IdStrings = object : AppStrings {
-    override val appName = "LifeOS"
-    override val welcomeBack = "Selamat Datang Kembali"
+    override val appName = "GAET"
+    override val welcomeBack = "Selamat Datang"
     override val registerHere = "Daftar Di Sini"
     override val signInToContinue = "Masuk untuk melanjutkan"
     override val signUpToContinue = "Daftar untuk melanjutkan"
@@ -104,6 +122,7 @@ val IdStrings = object : AppStrings {
     override val alreadyHaveAccount = "Sudah punya akun? Masuk"
     override val home = "Beranda"
     override val activity = "Aktivitas"
+    override val preview = "Pratinjau Web"
     override val library = "Koleksi"
     override val profile = "Profil"
     override val add = "Tambah"
@@ -125,15 +144,29 @@ val IdStrings = object : AppStrings {
     override val chooseOption = "Pilih Opsi"
     override val takePhoto = "Ambil Foto"
     override val chooseGallery = "Pilih dari Galeri"
+    override val delete = "Hapus"
+    override val edit = "Ubah"
+    override val cancel = "Batal"
+    override val confirmDelete = "Konfirmasi Hapus"
+    override val deleteMessage = "Apakah Anda yakin ingin menghapus item ini?"
 }
 
 val LocalStrings = staticCompositionLocalOf { EnStrings }
 
 /**
- * Returns the strings based on current system locale.
+ * Returns the strings based on current system locale or user preference stored in DataStore.
  */
 @Composable
 fun rememberStrings(): AppStrings {
-    val locale = LocalLocale.current.platformLocale.language
-    return if (locale == "in" || locale == "id") IdStrings else EnStrings
+    val context = LocalContext.current
+    val deviceManager = remember { DeviceManager(context) }
+    val userLang by deviceManager.appLanguage.collectAsState(initial = null)
+    
+    val systemLocale = LocalConfiguration.current.locales[0].language
+    
+    return when (userLang) {
+        "en" -> EnStrings
+        "id" -> IdStrings
+        else -> if (systemLocale == "in" || systemLocale == "id") IdStrings else EnStrings
+    }
 }

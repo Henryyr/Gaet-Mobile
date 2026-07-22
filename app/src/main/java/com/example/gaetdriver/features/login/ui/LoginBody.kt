@@ -2,11 +2,19 @@ package com.example.gaetdriver.features.login.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -15,9 +23,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.gaetdriver.core.base.i18n.LocalStrings
+import com.example.gaetdriver.core.data.model.LoginRequest
+import com.example.gaetdriver.core.data.model.RegisterRequest
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.core.ui.components.AppButton
 import com.example.gaetdriver.core.ui.components.AppTextField
@@ -37,8 +48,7 @@ fun LoginBody(
     var lastName by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     
-    val isLoading by authManager.isLoading.collectAsState()
-    val error by authManager.error.collectAsState()
+    val uiState by authManager.state.collectAsState()
     val scrollState = rememberScrollState()
 
     Column(
@@ -47,13 +57,38 @@ fun LoginBody(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (uiState.error != null) {
+            Surface(
+                color = MaterialTheme.colorScheme.errorContainer,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ErrorOutline,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Text(
+                        text = uiState.error!!,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+
         if (!isLoginMode) {
             AppTextField(
                 value = firstName,
                 onValueChange = { firstName = it },
                 label = strings.firstName,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             AppTextField(
@@ -61,7 +96,7 @@ fun LoginBody(
                 onValueChange = { lastName = it },
                 label = strings.lastName,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
 
             AppTextField(
@@ -69,7 +104,7 @@ fun LoginBody(
                 onValueChange = { phone = it },
                 label = strings.phoneNumber,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading
+                enabled = !uiState.isLoading
             )
         }
 
@@ -78,7 +113,7 @@ fun LoginBody(
             onValueChange = { email = it },
             label = strings.email,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         )
 
         AppTextField(
@@ -86,27 +121,26 @@ fun LoginBody(
             onValueChange = { password = it },
             label = strings.password,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading,
-            error = error // Display error message near the password field or use a global error component
+            enabled = !uiState.isLoading
         )
 
         AppButton(
             text = if (isLoginMode) strings.login else strings.signUp,
             onClick = {
                 if (isLoginMode) {
-                    authManager.signIn(email, password)
+                    authManager.signIn(LoginRequest(email, password))
                 } else {
-                    authManager.signUp(email, password, firstName, lastName, phone)
+                    authManager.signUp(RegisterRequest(email, password, firstName, lastName, phone))
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            isLoading = isLoading
+            isLoading = uiState.isLoading
         )
 
         TextButton(
             onClick = onModeToggle,
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = !uiState.isLoading
         ) {
             val toggleText = if (isLoginMode) strings.dontHaveAccount else strings.alreadyHaveAccount
             Text(

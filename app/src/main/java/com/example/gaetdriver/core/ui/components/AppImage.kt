@@ -1,6 +1,7 @@
 package com.example.gaetdriver.core.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -8,38 +9,68 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.gaetdriver.core.utils.ImageUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * A standardized way to display images with placeholders.
- * Note: This is a placeholder for actual image loading (e.g., Coil).
+ * Optimized with background decoding and caching for Base64 strings.
  */
 @Composable
 fun AppImage(
     model: Any?,
     modifier: Modifier = Modifier,
-    contentScale: ContentScale = ContentScale.Crop
+    transparent: Boolean = false,
+    contentScale: ContentScale = ContentScale.Crop,
+    contentDescription: String? = null,
+    onClick: (() -> Unit)? = null
 ) {
+    var displayModel by remember(model) { mutableStateOf<Any?>(null) }
+
+    LaunchedEffect(model) {
+        if (model is String && model.length > 100) {
+            displayModel = withContext(Dispatchers.IO) {
+                ImageUtils.decodeFromBase64(model)
+            }
+        } else {
+            displayModel = model
+        }
+    }
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center
+            .background(
+                if (transparent) Color.Transparent
+                else MaterialTheme.colorScheme.surfaceVariant
+            )            .then(
+                if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        // Placeholder Icon
-        Icon(
-            imageVector = Icons.Default.Image,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-            modifier = Modifier.fillMaxSize(0.4f)
-        )
-        
-        // When real image loading is added (e.g., Coil), it would be implemented here.
+        if (displayModel == null) {
+            Icon(
+                imageVector = Icons.Default.Image,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                modifier = Modifier.fillMaxSize(0.4f)
+            )
+        } else {
+            AsyncImage(
+                model = displayModel,
+                contentDescription = contentDescription,
+                contentScale = contentScale,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }

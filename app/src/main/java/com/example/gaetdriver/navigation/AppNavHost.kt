@@ -1,43 +1,57 @@
 package com.example.gaetdriver.navigation
 
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.compose.ui.platform.LocalContext
 import com.example.gaetdriver.constant.AppNavDestinations
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.features.home.HomeScreen
-import com.example.gaetdriver.features.activity.ActivityScreen
+import com.example.gaetdriver.features.webview.WebViewScreen
 import com.example.gaetdriver.features.library.LibraryScreen
 import com.example.gaetdriver.features.profile.ProfileScreen
+import com.example.gaetdriver.core.utils.DeviceManager
 
+/**
+ * Main Navigation Host that uses a Pager for smooth, stutter-free transitions.
+ */
 @Composable
 fun AppNavHost(
     authManager: AuthManager,
-    navController: NavHostController,
+    pagerState: PagerState,
     modifier: Modifier = Modifier
 ) {
-    NavHost(
-        navController = navController,
-        startDestination = AppNavDestinations.HOME.route,
-        modifier = modifier
-    ) {
-        composable(AppNavDestinations.HOME.route) {
-            HomeScreen()
-        }
+    val context = LocalContext.current
+    val deviceManager = remember { DeviceManager(context) }
+    
+    // Global setting from Profile
+    val isSwipeNavEnabled by deviceManager.isSwipeNavEnabled.collectAsState(initial = true)
+    
+    val tabs = listOf(
+        AppNavDestinations.HOME,
+        AppNavDestinations.ACTIVITY,
+        AppNavDestinations.LIBRARY,
+        AppNavDestinations.PROFILE
+    )
 
-        composable(AppNavDestinations.ACTIVITY.route) {
-            ActivityScreen()
-        }
+    // Current tab detection (Tab 1 is Activity which shows Web Preview)
+    val isWebViewPage = tabs[pagerState.currentPage] == AppNavDestinations.ACTIVITY
 
-
-        composable(AppNavDestinations.LIBRARY.route) {
-            LibraryScreen()
-        }
-
-        composable(AppNavDestinations.PROFILE.route) {
-            ProfileScreen(authManager = authManager)
+    HorizontalPager(
+        state = pagerState,
+        modifier = modifier.fillMaxSize(),
+        beyondViewportPageCount = tabs.size,
+        // userScrollEnabled is true ONLY IF global setting is ON AND we aren't on the web page
+        userScrollEnabled = isSwipeNavEnabled && !isWebViewPage 
+    ) { page ->
+        when (tabs[page]) {
+            AppNavDestinations.HOME -> HomeScreen()
+            AppNavDestinations.ACTIVITY -> WebViewScreen()
+            AppNavDestinations.LIBRARY -> LibraryScreen()
+            AppNavDestinations.PROFILE -> ProfileScreen(authManager = authManager)
+            else -> {}
         }
     }
 }
