@@ -15,11 +15,9 @@ import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.firebase.AuthManager
 import com.example.gaetdriver.core.ui.components.*
 import com.example.gaetdriver.core.ui.layout.ViewLayout
-import com.example.gaetdriver.features.profile.ui.BodyContent
 import com.example.gaetdriver.core.utils.DeviceManager
 import com.example.gaetdriver.features.onboarding.ui.PortfolioSetupContent
-import com.example.gaetdriver.features.profile.ui.ProfileMenuButton
-import com.example.gaetdriver.features.profile.ui.ProfileToggleItem
+import com.example.gaetdriver.features.profile.ui.BodyContent
 import com.example.gaetdriver.features.profile.ui.ThemeOptionItem
 import kotlinx.coroutines.launch
 
@@ -68,7 +66,7 @@ fun ProfileScreen(authManager: AuthManager) {
 //                )
 
                 // 1. Driver Portfolio settings
-                ProfileMenuButton(
+                AppMenuCard(
                     title = "Driver Bio & Info",
                     subtitle = "Manage your identity",
                     icon = Icons.Default.Badge,
@@ -76,7 +74,7 @@ fun ProfileScreen(authManager: AuthManager) {
                 )
 
                 // 2. Portfolio Web Setup
-                ProfileMenuButton(
+                AppMenuCard(
                     title = "Web Portfolio Setup",
                     subtitle = "Questions that define your web page",
                     icon = Icons.Default.Language,
@@ -84,7 +82,7 @@ fun ProfileScreen(authManager: AuthManager) {
                 )
 
                 // 3. Language selection
-                ProfileMenuButton(
+                AppMenuCard(
                     title = "App Language",
                     subtitle = if (userLang == "id") "Bahasa Indonesia" else "English",
                     icon = Icons.Default.Translate,
@@ -92,7 +90,7 @@ fun ProfileScreen(authManager: AuthManager) {
                 )
 
                 // 4. Theme preference
-                ProfileMenuButton(
+                AppMenuCard(
                     title = strings.themePreference,
                     subtitle = "Current: ${themeMode.replaceFirstChar { it.uppercase() }}",
                     icon = Icons.Default.Palette,
@@ -100,13 +98,20 @@ fun ProfileScreen(authManager: AuthManager) {
                 )
 
                 // 5. Swipe navigation toggle
-                ProfileToggleItem(
+                AppMenuCard(
                     title = "Swipe Navigation",
                     subtitle = "Enable/Disable side swiping",
                     icon = Icons.Default.Swipe,
-                    checked = isSwipeNavEnabled,
-                    onToggle = { enabled ->
-                        scope.launch { deviceManager.setSwipeNavEnabled(enabled) }
+                    onClick = {
+                        scope.launch { deviceManager.setSwipeNavEnabled(!isSwipeNavEnabled) }
+                    },
+                    trailingContent = {
+                        Switch(
+                            checked = isSwipeNavEnabled,
+                            onCheckedChange = { enabled ->
+                                scope.launch { deviceManager.setSwipeNavEnabled(enabled) }
+                            }
+                        )
                     }
                 )
 

@@ -34,6 +34,8 @@ import com.example.gaetdriver.core.utils.rememberMediaManager
 import com.example.gaetdriver.features.login.LoginScreen
 import com.example.gaetdriver.features.onboarding.OnboardingScreen
 import com.example.gaetdriver.navigation.AppNavHost
+import com.example.gaetdriver.features.webview.ui.WebPreviewFullScreen
+import com.example.gaetdriver.features.webview.ui.WebDesignFullScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -120,6 +122,9 @@ fun GaetDriverApp() {
 
                 val scope = rememberCoroutineScope()
 
+                // State for full-screen feature navigation (Preview, HTML Edit, etc.)
+                var activeFullScreenRoute by remember { mutableStateOf<String?>(null) }
+
                 val mediaManager = rememberMediaManager(
                     onImageCaptured = { uri ->
                         uri?.let { u ->
@@ -188,7 +193,7 @@ fun GaetDriverApp() {
                 )
 
                 Row(modifier = Modifier.fillMaxSize()) {
-                    if (isExpanded) {
+                    if (isExpanded && activeFullScreenRoute == null) {
                         BottomBarNavigation(
                             pagerState = pagerState,
                             windowSizeClass = adaptiveInfo.windowSizeClass,
@@ -199,7 +204,7 @@ fun GaetDriverApp() {
                     Scaffold(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         bottomBar = {
-                            if (!isExpanded) {
+                            if (!isExpanded && activeFullScreenRoute == null) {
                                 BottomBarNavigation(
                                     pagerState = pagerState,
                                     windowSizeClass = adaptiveInfo.windowSizeClass,
@@ -208,13 +213,30 @@ fun GaetDriverApp() {
                             }
                         }
                     ) { innerPadding ->
-                        AppNavHost(
-                            authManager = authManager,
-                            pagerState = pagerState,
-                            modifier = Modifier
-                                .padding(innerPadding)
-                                .fillMaxSize()
-                        )
+                        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                            AppNavHost(
+                                authManager = authManager,
+                                pagerState = pagerState,
+                                onNavigateFullScreen = { route -> activeFullScreenRoute = route },
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            // Overlay Full-screen views
+                            activeFullScreenRoute?.let { route ->
+                                when (route) {
+                                    "web_preview" -> {
+                                        WebPreviewFullScreen(
+                                            onBack = { activeFullScreenRoute = null }
+                                        )
+                                    }
+                                    "web_design" -> {
+                                        WebDesignFullScreen(
+                                            onBack = { activeFullScreenRoute = null }
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         if (showAddOptions.value) {
                             AddOptionsBottomSheet(

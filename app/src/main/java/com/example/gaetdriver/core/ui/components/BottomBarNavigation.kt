@@ -35,7 +35,7 @@ fun BottomBarNavigation(
     val tabs = remember {
         listOf(
             AppNavDestinations.HOME,
-            AppNavDestinations.ACTIVITY,
+            AppNavDestinations.PREVIEW,
             AppNavDestinations.LIBRARY,
             AppNavDestinations.PROFILE
         )
@@ -67,7 +67,7 @@ fun BottomBarNavigation(
                 val isActive = pagerState.currentPage == index
                 val label = when(destination) {
                     AppNavDestinations.HOME -> strings.home
-                    AppNavDestinations.ACTIVITY -> strings.preview
+                    AppNavDestinations.PREVIEW -> strings.preview
                     AppNavDestinations.LIBRARY -> strings.library
                     AppNavDestinations.PROFILE -> strings.profile
                     else -> ""

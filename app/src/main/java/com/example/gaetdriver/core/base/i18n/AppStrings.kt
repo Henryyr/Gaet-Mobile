@@ -31,6 +31,8 @@ interface AppStrings {
 
     val activity: String
     val preview: String
+    val webEdit: String
+    val webDesign: String
     val library: String
     val profile: String
     val add: String
@@ -77,6 +79,8 @@ val EnStrings = object : AppStrings {
     override val home = "Home"
     override val activity = "Activity"
     override val preview = "Web Preview"
+    override val webEdit = "Web Edit"
+    override val webDesign = "Design Components"
     override val library = "Library"
     override val profile = "Profile"
     override val add = "Add"
@@ -123,6 +127,8 @@ val IdStrings = object : AppStrings {
     override val home = "Beranda"
     override val activity = "Aktivitas"
     override val preview = "Pratinjau Web"
+    override val webEdit = "Edit Web"
+    override val webDesign = "Desain Komponen"
     override val library = "Koleksi"
     override val profile = "Profil"
     override val add = "Tambah"

@@ -29,6 +29,8 @@ data class DriverProfile(
     var vehicle: String = "",
     var services: List<String> = emptyList(),
     var experience: String = "",
+    @get:PropertyName("custom_html") @set:PropertyName("custom_html")
+    var customHtml: String = ""
 ) {
     @get:Exclude
     val fullName: String get() = "$firstName $lastName".trim()

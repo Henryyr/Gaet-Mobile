@@ -35,13 +35,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // 2. LOAD UI COMPONENTS (Sequential to maintain order)
-    await utils.loadComponent('/components/hero.html', 'hero-container');
-    await utils.loadComponent('/components/profile.html', 'hero-container');
-    await utils.loadComponent('/components/catalog.html', 'catalog-container');
-    await utils.loadComponent('/components/footer.html', 'footer-container');
+    const loadDefaultLayout = async () => {
+        await utils.loadComponent('/components/hero.html', 'hero-container');
+        await utils.loadComponent('/components/profile.html', 'hero-container');
+        await utils.loadComponent('/components/catalog.html', 'catalog-container');
+        await utils.loadComponent('/components/footer.html', 'footer-container');
+    };
 
     // UI ELEMENTS (Mapped after components are fully injected)
-    const ui = {
+    const getUiElements = () => ({
         name: document.getElementById('driver-name'),
         location: document.getElementById('driver-location'),
         bio: document.getElementById('driver-bio'),
@@ -54,7 +56,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         tagline: document.getElementById('web-tagline'),
         vehicle: document.getElementById('web-vehicle-info'),
         services: document.getElementById('web-services-list')
-    };
+    });
+
+    let ui = {};
 
     // 3. WIDGETS
     const components = {
@@ -101,16 +105,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const db = firebase.firestore();
     const actions = {
         renderCatalog: (items) => {
-            if (!ui.loading || !ui.grid || !ui.empty) return;
-            ui.loading.classList.add('hidden');
+            if (!ui.grid) return;
+            if (ui.loading) ui.loading.classList.add('hidden');
             ui.grid.innerHTML = "";
             if (!items || items.length === 0) {
-                ui.grid.classList.add('hidden');
-                ui.empty.classList.remove('hidden');
+                if (ui.empty) ui.empty.classList.remove('hidden');
                 return;
             }
-            ui.empty.classList.add('hidden');
-            ui.grid.classList.remove('hidden');
+            if (ui.empty) ui.empty.classList.add('hidden');
             ui.grid.innerHTML = items.map(components.catalogCard).join('');
         },
         handleSearch: () => {
@@ -127,6 +129,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const userDoc = await db.collection("users").doc(uid).get();
                 if (userDoc.exists) {
                     const d = userDoc.data();
+
+                    // Check for custom HTML override
+                    if (d.custom_html && d.custom_html.trim() !== "") {
+                        document.body.innerHTML = d.custom_html;
+                    } else {
+                        await loadDefaultLayout();
+                    }
+
+                    // Re-bind UI elements after injection
+                    ui = getUiElements();
+
                     const fullName = `${d.first_name || ''} ${d.last_name || ''}`.trim();
                     if (ui.name) ui.name.innerText = fullName || "Professional Guide";
                     if (ui.bio) ui.bio.innerText = d.bio || "Crafting memorable journeys.";
@@ -142,6 +155,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else if (ui.services) {
                         ui.services.innerHTML = ["Flexible Route", "Local Assistance"].map((s, i) => components.serviceItem(s, i)).join('');
                     }
+
+                    if (ui.search) ui.search.addEventListener('input', actions.handleSearch);
                 }
 
                 // Fetch Catalog Items
@@ -159,11 +174,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 5. START
     const userId = utils.getUserId();
     if (!userId) {
+        await loadDefaultLayout();
+        ui = getUiElements();
         if (ui.name) ui.name.innerText = "Local Guide Portfolio";
         if (ui.loading) ui.loading.classList.add('hidden');
         if (ui.empty) ui.empty.classList.remove('hidden');
     } else {
-        if (ui.search) ui.search.addEventListener('input', actions.handleSearch);
         actions.fetchData(userId);
     }
 });
