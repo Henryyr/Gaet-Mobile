@@ -57,6 +57,16 @@ fun ProfileScreen(authManager: AuthManager) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+//                AppImage(
+//                    model = R.drawable.gaet_logo,
+//                    transparent = true,
+//                    modifier = Modifier
+//                        .size(80.dp)
+//                        .align(Alignment.CenterHorizontally),
+//                    contentScale = ContentScale.Fit,
+//                    contentDescription = "GAET Logo"
+//                )
+
                 // 1. Driver Portfolio settings
                 ProfileMenuButton(
                     title = "Driver Bio & Info",
@@ -112,9 +122,9 @@ fun ProfileScreen(authManager: AuthManager) {
                     ),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
-                    Text(strings.logout)
+                    Text(text = (strings.logout), color = (MaterialTheme.colorScheme.primary))
                 }
             }
         }

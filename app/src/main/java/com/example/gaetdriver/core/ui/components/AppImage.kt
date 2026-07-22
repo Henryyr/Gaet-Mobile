@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -28,6 +29,7 @@ import kotlinx.coroutines.withContext
 fun AppImage(
     model: Any?,
     modifier: Modifier = Modifier,
+    transparent: Boolean = false,
     contentScale: ContentScale = ContentScale.Crop,
     contentDescription: String? = null,
     onClick: (() -> Unit)? = null
@@ -47,8 +49,10 @@ fun AppImage(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .then(
+            .background(
+                if (transparent) Color.Transparent
+                else MaterialTheme.colorScheme.surfaceVariant
+            )            .then(
                 if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
             ),
         contentAlignment = Alignment.Center,

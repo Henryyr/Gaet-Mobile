@@ -1,6 +1,7 @@
 package com.example.gaetdriver.features.profile.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ fun ThemeOptionItem(
         modifier = Modifier
             .fillMaxWidth()
             .height(56.dp)
+            .clickable(onClick = onClick)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f) 
                 else Color.Transparent
@@ -29,7 +31,7 @@ fun ThemeOptionItem(
             .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = selected, onClick = onClick)
+        RadioButton(selected = selected, onClick = null)
         Spacer(Modifier.width(16.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge)
     }

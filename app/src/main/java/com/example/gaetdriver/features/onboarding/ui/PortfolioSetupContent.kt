@@ -9,12 +9,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.gaetdriver.core.constant.ExperienceConstants
 import com.example.gaetdriver.core.data.model.DriverProfile
 import com.example.gaetdriver.core.data.repository.rememberPortfolioRepository
 import com.example.gaetdriver.core.ui.components.AppButton
+import com.example.gaetdriver.core.ui.components.AppDropDown
 import com.example.gaetdriver.core.ui.components.AppTextField
+import com.example.gaetdriver.core.constant.VehicleConstants
 import kotlinx.coroutines.launch
 
 /**
@@ -36,7 +38,9 @@ fun PortfolioSetupContent(
 
     // Form states
     var tagline by remember { mutableStateOf("") }
-    var vehicle by remember { mutableStateOf("") }
+    var selectedVehicleDropdown by remember { mutableStateOf("") }
+    var selectedExperienceOptions by remember { mutableStateOf("")}
+    var manualVehicleInput by remember { mutableStateOf("") }
     var experience by remember { mutableStateOf("") }
     val selectedServices = remember { mutableStateListOf<String>() }
 
@@ -46,10 +50,18 @@ fun PortfolioSetupContent(
         profile = portfolioRepo.getProfile(userId)
         profile?.let {
             tagline = it.tagline
-            vehicle = it.vehicle
             experience = it.experience
             selectedServices.clear()
             selectedServices.addAll(it.services)
+            
+            // Logic for vehicle dropdown vs manual input
+            if (VehicleConstants.guideVehicleOptions.contains(it.vehicle)) {
+                selectedVehicleDropdown = it.vehicle
+                manualVehicleInput = ""
+            } else if (it.vehicle.isNotEmpty()) {
+                selectedVehicleDropdown = "Other"
+                manualVehicleInput = it.vehicle
+            }
         }
         isLoading = false
     }
@@ -66,18 +78,6 @@ fun PortfolioSetupContent(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Web Portfolio Setup",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
-            
-            Text(
-                text = "These details will define how your public portfolio page looks to potential clients.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
             AppTextField(
                 value = tagline,
                 onValueChange = { tagline = it },
@@ -85,18 +85,34 @@ fun PortfolioSetupContent(
                 placeholder = "e.g. Your Personal Guide for Hidden Gems"
             )
 
-            AppTextField(
-                value = vehicle,
-                onValueChange = { vehicle = it },
-                label = "Vehicle Description",
-                placeholder = "e.g. Modern SUV / AC Minibus"
+            AppDropDown(
+                options = VehicleConstants.guideVehicleOptions,
+                selectedOption = selectedVehicleDropdown,
+                onOptionSelected = { 
+                    selectedVehicleDropdown = it
+                    if (it != "Other") manualVehicleInput = ""
+                },
+                label = "Vehicle Type",
+                placeholder = "Select your vehicle"
             )
 
-            AppTextField(
-                value = experience,
-                onValueChange = { experience = it },
+            if (selectedVehicleDropdown == "Other") {
+                AppTextField(
+                    value = manualVehicleInput,
+                    onValueChange = { manualVehicleInput = it },
+                    label = "Specify Vehicle",
+                    placeholder = "Enter your vehicle model"
+                )
+            }
+
+            AppDropDown(
+                options = ExperienceConstants.experienceOptions,
+                selectedOption = selectedExperienceOptions,
+                onOptionSelected = {
+                    selectedExperienceOptions = it
+                },
                 label = "Guiding Experience",
-                placeholder = "e.g. 10 years exploring Java"
+                placeholder = "Years of Experience"
             )
 
             Text("Services", style = MaterialTheme.typography.titleSmall)
@@ -106,10 +122,14 @@ fun PortfolioSetupContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 availableServices.forEach { service ->
+
+                    val selected = selectedServices.contains(service)
+
                     FilterChip(
-                        selected = selectedServices.contains(service),
+                        selected = selected,
+                        enabled = selected || selectedServices.size < 3,
                         onClick = { 
-                            if (selectedServices.contains(service)) 
+                            if (selected)
                                 selectedServices.remove(service) 
                             else 
                                 selectedServices.add(service) 
@@ -128,9 +148,15 @@ fun PortfolioSetupContent(
                 onClick = {
                     isSaving = true
                     scope.launch {
+                        val finalVehicle = if (selectedVehicleDropdown == "Other") {
+                            manualVehicleInput
+                        } else {
+                            selectedVehicleDropdown
+                        }
+                        
                         val updated = (profile ?: DriverProfile()).copy(
                             tagline = tagline,
-                            vehicle = vehicle,
+                            vehicle = finalVehicle,
                             experience = experience,
                             services = selectedServices.toList(),
                             onboardingCompleted = true
