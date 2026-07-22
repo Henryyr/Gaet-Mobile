@@ -20,7 +20,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 @Composable
 fun AppWebView(
     url: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onWebViewCreated: ((WebView) -> Unit)? = null,
+    onPageFinished: (() -> Unit)? = null
 ) {
     var isLoading by remember { mutableStateOf(true) }
 
@@ -36,14 +38,22 @@ fun AppWebView(
                         useWideViewPort = true
                         setSupportZoom(true)
                     }
-                    
+
                     webViewClient = object : WebViewClient() {
-                        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                        override fun onPageStarted(
+                            view: WebView?,
+                            url: String?,
+                            favicon: Bitmap?
+                        ) {
                             isLoading = true
                         }
 
-                        override fun onPageFinished(view: WebView?, url: String?) {
+                        override fun onPageFinished(
+                            view: WebView?,
+                            url: String?
+                        ) {
                             isLoading = false
+                            onPageFinished?.invoke()
                         }
 
                         override fun onReceivedError(
@@ -52,14 +62,19 @@ fun AppWebView(
                             error: WebResourceError?
                         ) {
                             isLoading = false
+                            onPageFinished?.invoke()
                         }
                     }
-                    
+
+                    onWebViewCreated?.invoke(this)
+
                     loadUrl(url)
                 }
             },
             update = { webView ->
-                // No need to update URL here as it's passed in factory once
+                if (webView.url != url) {
+                    webView.loadUrl(url)
+                }
             }
         )
 
