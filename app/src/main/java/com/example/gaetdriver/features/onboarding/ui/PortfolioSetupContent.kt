@@ -39,9 +39,8 @@ fun PortfolioSetupContent(
     // Form states
     var tagline by remember { mutableStateOf("") }
     var selectedVehicleDropdown by remember { mutableStateOf("") }
-    var selectedExperienceOptions by remember { mutableStateOf("")}
+    var selectedExperienceOptions by remember { mutableStateOf("") }
     var manualVehicleInput by remember { mutableStateOf("") }
-    var experience by remember { mutableStateOf("") }
     val selectedServices = remember { mutableStateListOf<String>() }
 
     val availableServices = listOf("City Tour", "Airport Transfer", "Nature Trip", "Culture Tour", "Flexible Route", "Inter-city")
@@ -50,7 +49,7 @@ fun PortfolioSetupContent(
         profile = portfolioRepo.getProfile(userId)
         profile?.let {
             tagline = it.tagline
-            experience = it.experience
+            selectedExperienceOptions = it.experience
             selectedServices.clear()
             selectedServices.addAll(it.services)
             
@@ -157,9 +156,10 @@ fun PortfolioSetupContent(
                         val updated = (profile ?: DriverProfile()).copy(
                             tagline = tagline,
                             vehicle = finalVehicle,
-                            experience = experience,
+                            experience = selectedExperienceOptions,
                             services = selectedServices.toList(),
-                            onboardingCompleted = true
+                            onboardingCompleted = true,
+                            themeId = if ((profile?.themeId ?: "").isEmpty()) "7j8K9L0m1N2p3Q4r5S6t" else (profile?.themeId ?: "7j8K9L0m1N2p3Q4r5S6t")
                         )
                         portfolioRepo.saveProfile(userId, updated)
                         isSaving = false

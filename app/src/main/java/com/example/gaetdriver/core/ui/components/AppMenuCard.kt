@@ -1,9 +1,11 @@
-package com.example.gaetdriver.features.profile.ui
+package com.example.gaetdriver.core.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -13,26 +15,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 /**
- * A toggleable menu item for the Profile screen with an integrated icon container.
+ * A standard menu card used for navigation hubs and settings.
+ * Adheres to DRY by supporting optional trailing content (e.g. Toggles).
  */
 @Composable
-fun ProfileToggleItem(
+fun AppMenuCard(
     title: String,
     subtitle: String,
     icon: ImageVector,
-    checked: Boolean = false,
-    onToggle: ((Boolean) -> Unit)? = null,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
     trailingContent: @Composable (() -> Unit)? = null
 ) {
     Surface(
+        onClick = onClick,
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon Container
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -46,9 +51,10 @@ fun ProfileToggleItem(
                     modifier = Modifier.size(20.dp)
                 )
             }
-
+            
             Spacer(Modifier.width(16.dp))
-
+            
+            // Text Content
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
@@ -61,10 +67,16 @@ fun ProfileToggleItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            if (onToggle != null) {
-                Switch(checked = checked, onCheckedChange = onToggle)
+
+            // Trailing Content (Chevron by default)
+            if (trailingContent != null) {
+                trailingContent()
             } else {
-                trailingContent?.invoke()
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
             }
         }
     }

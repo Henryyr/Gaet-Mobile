@@ -1,0 +1,19 @@
+<style>
+    :root { --p: #000; --s: #666; --bg: #fff; }
+    body { background: var(--bg); color: var(--p); font-family: 'Inter', sans-serif; margin: 0; line-height: 1.6; }
+    .h { padding: clamp(2rem, 10vh, 6rem) 1.5rem; text-align: center; border-bottom: 1px solid #eee; }
+    .h h1 { font-size: clamp(2rem, 8vw, 3.5rem); margin: 0; font-weight: 900; }
+    .c { max-width: 900px; margin: 0 auto; padding: 3rem 1.5rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+    .bio { font-size: 1.2rem; margin-bottom: 3rem; border-left: 4px solid #000; padding-left: 1.5rem; }
+</style>
+<header class="h">
+    <h1 id="driver-name">Loading...</h1>
+    <p id="web-tagline" style="color: var(--s);"></p>
+    <div id="driver-location" style="font-weight: 700; margin-top: 10px;"></div>
+</header>
+<div class="c">
+    <p id="driver-bio" class="bio"></p>
+    <div id="web-services-list" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 3rem;"></div>
+    <div id="catalog-grid" class="grid"></div>
+</div>

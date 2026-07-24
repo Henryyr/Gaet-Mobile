@@ -79,11 +79,13 @@ fun BodyContent(authManager: AuthManager) {
             } else {
                 var tempFirstName by remember { mutableStateOf(profile?.firstName ?: "") }
                 var tempLastName by remember { mutableStateOf(profile?.lastName ?: "") }
+                var tempPhone by remember { mutableStateOf(profile?.phone ?: "") }
                 var tempBio by remember { mutableStateOf(profile?.bio ?: "") }
                 var tempLocation by remember { mutableStateOf(profile?.location ?: "") }
 
                 AppTextField(value = tempFirstName, onValueChange = { tempFirstName = it }, label = strings.firstName)
                 AppTextField(value = tempLastName, onValueChange = { tempLastName = it }, label = strings.lastName)
+                AppTextField(value = tempPhone, onValueChange = { tempPhone = it }, label = strings.phoneNumber)
                 AppTextField(value = tempLocation, onValueChange = { tempLocation = it }, label = "Location")
                 AppTextField(value = tempBio, onValueChange = { tempBio = it }, label = "Bio / About Me")
 
@@ -94,6 +96,7 @@ fun BodyContent(authManager: AuthManager) {
                             val updated = profile?.copy(
                                 firstName = tempFirstName,
                                 lastName = tempLastName,
+                                phone = tempPhone,
                                 bio = tempBio,
                                 location = tempLocation
                             )

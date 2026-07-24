@@ -1,0 +1,22 @@
+<style>
+    :root { --paper: #f9f7f2; --ink: #1a1a1a; --accent: #8b4513; }
+    body { background: var(--paper); color: var(--ink); font-family: 'Lora', serif; margin: 0; line-height: 2; }
+    .journal { max-width: 850px; margin: 0 auto; padding: 6rem 1.5rem; }
+    h1 { font-size: clamp(2.5rem, 10vw, 4.5rem); text-align: center; font-weight: 400; }
+    .story { column-count: 1; gap: 3rem; margin: 4rem 0; }
+    @media(min-width: 700px) { .story { column-count: 2; } }
+    .postcard-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4rem; }
+</style>
+<div class="journal">
+    <div id="driver-location" style="text-align: center; text-transform: uppercase; letter-spacing: 3px; font-size: 0.8rem; color: #999;"></div>
+    <h1 id="driver-name">Loading...</h1>
+    <p id="web-tagline" style="text-align: center; font-style: italic; color: var(--accent); font-size: 1.3rem;"></p>
+    <div class="story">
+        <p id="driver-bio"></p>
+        <div id="web-services-list" style="display: flex; flex-direction: column; gap: 10px; color: var(--accent); font-weight: 700;"></div>
+    </div>
+    <div style="text-align: center; padding: 2rem; border: 1px solid #ddd; margin: 4rem 0;">
+        Vehicle: <span id="web-vehicle-info"></span>
+    </div>
+    <div id="catalog-grid" class="postcard-grid"></div>
+</div>

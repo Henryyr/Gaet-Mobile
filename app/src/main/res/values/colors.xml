@@ -13,4 +13,7 @@
     <color name="secondary_grey">#77574E</color>
     <color name="tertiary_green">#6C5D2F</color>
     <color name="primary_container_orange">#FFDBD1</color>
+    <!-- App Theme Colors (Synced with Color.kt) -->
+    <color name="bg_light">#F5E8E0</color>
+    <color name="bg_dark">#1A1110</color>
 </resources>

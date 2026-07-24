@@ -1,47 +1,66 @@
 package com.example.gaetdriver.features.webview
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.example.gaetdriver.constant.AppNavDestinations
 import com.example.gaetdriver.core.base.i18n.LocalStrings
-import com.example.gaetdriver.core.firebase.rememberAuthManager
-import com.example.gaetdriver.core.ui.components.AppWebView
+import com.example.gaetdriver.core.ui.components.AppMenuCard
 import com.example.gaetdriver.core.ui.components.SectionHeader
 import com.example.gaetdriver.core.ui.layout.ViewLayout
 
-/**
- * Screen that displays the driver's web portfolio using a lightweight WebView.
- */
 @Composable
-fun WebViewScreen() {
+fun WebViewScreen(
+    onNavigateFullScreen: (String) -> Unit
+) {
     val strings = LocalStrings.current
-    val authManager = rememberAuthManager()
-    val userId = authManager.currentUserId
 
     ViewLayout(
         header = {
-            SectionHeader(title = strings.preview)
+            SectionHeader(title = "Web Portfolio")
         },
         body = {
-            if (userId != null) {
-                AppWebView(
-                    url = "https://gaetdriver.web.app/portfolio/$userId",
-                    modifier = Modifier.fillMaxSize()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Manage how your portfolio looks online. Choose an action below.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            } else {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Please login to see preview",
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+
+                AppMenuCard(
+                    title = strings.preview,
+                    subtitle = "View your live web page as seen by clients.",
+                    icon = Icons.Default.Visibility,
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_PREVIEW.toString()) }
+                )
+
+                AppMenuCard(
+                    title = strings.webDesign,
+                    subtitle = "Customize the HTML structure and presets.",
+                    icon = Icons.Default.ColorLens,
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_DESIGN.toString()) }
+                )
+
+                AppMenuCard(
+                    title = strings.webSetup,
+                    subtitle = "Questions that define your web page",
+                    icon = Icons.Default.Language,
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_SETUP.toString()) }
+                )
             }
         }
     )

@@ -18,9 +18,6 @@ class PortfolioRepository(firestore: FirebaseFirestore) {
     private val catalogCollection = firestore.collection("catalog")
     private val activitiesCollection = firestore.collection("activities")
 
-    /**
-     * Records a new activity for the user.
-     */
     suspend fun logActivity(userId: String, type: String, title: String, description: String = "") {
         try {
             val log = ActivityLog(

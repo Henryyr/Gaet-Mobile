@@ -4,14 +4,20 @@ import com.example.gaetdriver.R
 
 enum class AppNavDestinations(
     val route: String,
-    val icon: Int,
+    val icon: Int?,
     val label: String
 ) {
     HOME(route = "home", icon = R.drawable.ic_home, label = "Home"),
-    ACTIVITY(route = "activity", icon = R.drawable.ic_activity, label = "Activity"),
+    PREVIEW(route = "preview", icon = R.drawable.ic_preview, label = "Web"),
     ADD(route = "add", icon = R.drawable.ic_add, label = "Add"),
     LIBRARY(route = "library", icon = R.drawable.ic_library, label = "Library"),
-    PROFILE(route = "profile", icon = R.drawable.ic_account_box, label = "Profile")
+    PROFILE(route = "profile", icon = R.drawable.ic_account_box, label = "Profile"),
+
+    WEB_PREVIEW(route = "web_preview", icon = null, label = "Web_preview"),
+
+    WEB_DESIGN(route = "web_design", icon = null, label = "Web_design"),
+
+    WEB_SETUP(route = "web_setup", icon = null, label = "Web_setup")
 }
 
 enum class Variant {

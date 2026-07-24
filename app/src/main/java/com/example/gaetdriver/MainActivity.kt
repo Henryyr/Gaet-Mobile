@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.rememberPagerState
@@ -19,6 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.compose.ui.unit.dp
 import androidx.window.core.layout.WindowSizeClass
+import com.example.gaetdriver.constant.AppNavDestinations
 import com.example.gaetdriver.core.base.AppException
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.base.i18n.rememberStrings
@@ -34,16 +36,26 @@ import com.example.gaetdriver.core.utils.rememberMediaManager
 import com.example.gaetdriver.features.login.LoginScreen
 import com.example.gaetdriver.features.onboarding.OnboardingScreen
 import com.example.gaetdriver.navigation.AppNavHost
+import com.example.gaetdriver.features.webview.ui.WebPreviewFullScreen
+import com.example.gaetdriver.features.webview.ui.WebDesignFullScreen
+import com.example.gaetdriver.features.webview.ui.WebSetupFullScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            GaetDriverApp()
+            var isReady by remember { mutableStateOf(false) }
+            
+            splashScreen.setKeepOnScreenCondition {
+                !isReady
+            }
+
+            GaetDriverApp(onReady = { isReady = true })
         }
     }
 }
@@ -51,7 +63,7 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @PreviewScreenSizes
 @Composable
-fun GaetDriverApp() {
+fun GaetDriverApp(onReady: () -> Unit = {}) {
     val strings = rememberStrings()
     val adaptiveInfo = currentWindowAdaptiveInfo()
     val isExpanded = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
@@ -81,6 +93,14 @@ fun GaetDriverApp() {
     val context = LocalContext.current
     val deviceManager = remember { DeviceManager(context) }
     val themeMode by deviceManager.themeMode.collectAsState(initial = "system")
+
+    // Notify that we are ready once initial data is loaded
+    // (We consider ready when theme is loaded and profile check is done)
+    LaunchedEffect(themeMode, isValidating, isLoadingProfile) {
+        if (!isValidating && !isLoadingProfile) {
+            onReady()
+        }
+    }
 
     val darkTheme = when (themeMode) {
         "light" -> false
@@ -119,6 +139,9 @@ fun GaetDriverApp() {
                 val pagerState = rememberPagerState(pageCount = { 4 })
 
                 val scope = rememberCoroutineScope()
+
+                // State for full-screen feature navigation (Preview, HTML Edit, etc.)
+                var activeFullScreenRoute by remember { mutableStateOf<String?>(null) }
 
                 val mediaManager = rememberMediaManager(
                     onImageCaptured = { uri ->
@@ -188,7 +211,7 @@ fun GaetDriverApp() {
                 )
 
                 Row(modifier = Modifier.fillMaxSize()) {
-                    if (isExpanded) {
+                    if (isExpanded && activeFullScreenRoute == null) {
                         BottomBarNavigation(
                             pagerState = pagerState,
                             windowSizeClass = adaptiveInfo.windowSizeClass,
@@ -199,7 +222,7 @@ fun GaetDriverApp() {
                     Scaffold(
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                         bottomBar = {
-                            if (!isExpanded) {
+                            if (!isExpanded && activeFullScreenRoute == null) {
                                 BottomBarNavigation(
                                     pagerState = pagerState,
                                     windowSizeClass = adaptiveInfo.windowSizeClass,
@@ -208,13 +231,35 @@ fun GaetDriverApp() {
                             }
                         }
                     ) { innerPadding ->
-                        AppNavHost(
-                            authManager = authManager,
-                            pagerState = pagerState,
-                            modifier = Modifier
-                                .padding(innerPadding)
-                                .fillMaxSize()
-                        )
+                        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
+                            AppNavHost(
+                                authManager = authManager,
+                                pagerState = pagerState,
+                                onNavigateFullScreen = { route -> activeFullScreenRoute = route },
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                            // Overlay Full-screen views
+                            activeFullScreenRoute?.let { route ->
+                                when (route) {
+                                    AppNavDestinations.WEB_PREVIEW.toString() -> {
+                                        WebPreviewFullScreen(
+                                            onBack = { activeFullScreenRoute = null }
+                                        )
+                                    }
+                                    AppNavDestinations.WEB_DESIGN.toString() -> {
+                                        WebDesignFullScreen(
+                                            onBack = { activeFullScreenRoute = null }
+                                        )
+                                    }
+                                    AppNavDestinations.WEB_SETUP.toString() -> {
+                                        WebSetupFullScreen(
+                                            onBack = { activeFullScreenRoute = null }
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         if (showAddOptions.value) {
                             AddOptionsBottomSheet(

@@ -21,6 +21,7 @@ import com.example.gaetdriver.core.utils.DeviceManager
 fun AppNavHost(
     authManager: AuthManager,
     pagerState: PagerState,
+    onNavigateFullScreen: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -31,24 +32,20 @@ fun AppNavHost(
     
     val tabs = listOf(
         AppNavDestinations.HOME,
-        AppNavDestinations.ACTIVITY,
+        AppNavDestinations.PREVIEW,
         AppNavDestinations.LIBRARY,
         AppNavDestinations.PROFILE
     )
-
-    // Current tab detection (Tab 1 is Activity which shows Web Preview)
-    val isWebViewPage = tabs[pagerState.currentPage] == AppNavDestinations.ACTIVITY
 
     HorizontalPager(
         state = pagerState,
         modifier = modifier.fillMaxSize(),
         beyondViewportPageCount = tabs.size,
-        // userScrollEnabled is true ONLY IF global setting is ON AND we aren't on the web page
-        userScrollEnabled = isSwipeNavEnabled && !isWebViewPage 
+        userScrollEnabled = isSwipeNavEnabled 
     ) { page ->
         when (tabs[page]) {
             AppNavDestinations.HOME -> HomeScreen()
-            AppNavDestinations.ACTIVITY -> WebViewScreen()
+            AppNavDestinations.PREVIEW -> WebViewScreen(onNavigateFullScreen = onNavigateFullScreen)
             AppNavDestinations.LIBRARY -> LibraryScreen()
             AppNavDestinations.PROFILE -> ProfileScreen(authManager = authManager)
             else -> {}
