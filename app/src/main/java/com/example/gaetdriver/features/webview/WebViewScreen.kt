@@ -5,11 +5,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.gaetdriver.constant.AppNavDestinations
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import com.example.gaetdriver.core.ui.components.AppMenuCard
 import com.example.gaetdriver.core.ui.components.SectionHeader
@@ -43,14 +45,21 @@ fun WebViewScreen(
                     title = strings.preview,
                     subtitle = "View your live web page as seen by clients.",
                     icon = Icons.Default.Visibility,
-                    onClick = { onNavigateFullScreen("web_preview") }
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_PREVIEW.toString()) }
                 )
 
                 AppMenuCard(
                     title = strings.webDesign,
                     subtitle = "Customize the HTML structure and presets.",
                     icon = Icons.Default.ColorLens,
-                    onClick = { onNavigateFullScreen("web_design") }
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_DESIGN.toString()) }
+                )
+
+                AppMenuCard(
+                    title = strings.webSetup,
+                    subtitle = "Questions that define your web page",
+                    icon = Icons.Default.Language,
+                    onClick = { onNavigateFullScreen(AppNavDestinations.WEB_SETUP.toString()) }
                 )
             }
         }

@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.gaetdriver.constant.AppNavDestinations
 import androidx.window.core.layout.WindowSizeClass
+import com.example.gaetdriver.R
 import com.example.gaetdriver.core.base.i18n.LocalStrings
 import kotlinx.coroutines.launch
 
@@ -56,7 +57,7 @@ fun BottomBarNavigation(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(AppNavDestinations.ADD.icon),
+                        painter = painterResource(AppNavDestinations.ADD.icon ?: R.drawable.ic_default),
                         contentDescription = "Add",
                         tint = MaterialTheme.colorScheme.onPrimary
                     )
@@ -76,7 +77,7 @@ fun BottomBarNavigation(
                 NavigationRailItem(
                     selected = isActive,
                     onClick = { scope.launch { pagerState.scrollToPage(index) } },
-                    icon = { Icon(painterResource(destination.icon), null) },
+                    icon = { Icon(painterResource(destination.icon ?: R.drawable.ic_default), null) },
                     label = { Text(label) },
                     colors = NavigationRailItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
@@ -104,7 +105,6 @@ fun BottomBarNavigation(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Logic to insert ADD button in the middle
                     val allDestinations = listOf(
                         tabs[0], tabs[1], AppNavDestinations.ADD, tabs[2], tabs[3]
                     )
@@ -137,7 +137,7 @@ fun BottomBarNavigation(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                painterResource(destination.icon),
+                                painterResource(destination.icon ?: R.drawable.ic_default),
                                 contentDescription = destination.route,
                                 modifier = Modifier.size(if (isAdd) 28.dp else 24.dp),
                                 tint = when {

@@ -1,0 +1,29 @@
+<style>
+    :root { --p: #d99a4e; --s: #4f6f52; --bg: #fffaf1; --t: #2f2a24; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--t); margin: 0; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+    .hero { padding: 4rem 0; background: linear-gradient(135deg, #2f2a24, #4f6f52); color: #fff; text-align: center; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
+    .hero h1 { font-size: clamp(2rem, 8vw, 4rem); margin: 0; }
+    .card-group { display: flex; flex-direction: column; gap: 2rem; margin-top: -3rem; }
+    @media(min-width: 992px) { .card-group { flex-direction: row; } }
+    .profile-card { background: #fff; padding: 2rem; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); color: var(--t); flex: 1; }
+    .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; padding: 4rem 0; }
+</style>
+<div class="hero">
+    <div class="container">
+        <h1 id="driver-name">Loading...</h1>
+        <p id="web-tagline"></p>
+        <div id="driver-location" style="margin-top: 10px; opacity: 0.8;"></div>
+    </div>
+</div>
+<div class="container">
+    <div class="card-group">
+        <div class="profile-card">
+            <h3>About Guide</h3>
+            <p id="driver-bio"></p>
+            <div id="web-vehicle-info" style="font-weight: bold; color: var(--p);"></div>
+            <div id="web-services-list" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem;"></div>
+        </div>
+    </div>
+    <div id="catalog-grid" class="catalog-grid"></div>
+</div>

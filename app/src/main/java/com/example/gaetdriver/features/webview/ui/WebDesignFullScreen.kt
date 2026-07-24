@@ -4,7 +4,6 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +23,13 @@ import com.example.gaetdriver.core.ui.components.AppButton
 import com.example.gaetdriver.core.ui.components.AppCard
 import kotlinx.coroutines.launch
 
+// Master Theme Professional IDs (UID-style)
+private const val ID_CLASSIC = "7j8K9L0m1N2p3Q4r5S6t"
+private const val ID_MINIMALIST = "8v9W0x1Y2z3A4b5C6d7E"
+private const val ID_EXPLORER = "9G0h1I2j3K4l5M6n7O8p"
+private const val ID_EXECUTIVE = "0R1s2T3u4V5w6X7y8Z9a"
+private const val ID_STORYTELLER = "1B2c3D4e5F6g7H8i9J0k"
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WebDesignFullScreen(
@@ -35,13 +41,15 @@ fun WebDesignFullScreen(
     val portfolioRepo = rememberPortfolioRepository()
     val scope = rememberCoroutineScope()
 
-    var selectedPreset by remember { mutableStateOf("default") }
+    var selectedPreset by remember { mutableStateOf(ID_CLASSIC) }
+    var isLoading by remember { mutableStateOf(true) }
     var isSaving by remember { mutableStateOf(false) }
 
-    // Load current preset
+    // Load current preset ID
     LaunchedEffect(userId) {
         val profile = portfolioRepo.getProfile(userId)
-        selectedPreset = if (profile?.customHtml.isNullOrEmpty()) "default" else "modern"
+        selectedPreset = profile?.themeId ?: ID_CLASSIC
+        isLoading = false
     }
 
     Scaffold(
@@ -67,9 +75,7 @@ fun WebDesignFullScreen(
                             try {
                                 val profile = portfolioRepo.getProfile(userId)
                                 if (profile != null) {
-                                    val updated = profile.copy(
-                                        customHtml = if (selectedPreset == "modern") modernPresetHtml else ""
-                                    )
+                                    val updated = profile.copy(themeId = selectedPreset)
                                     portfolioRepo.saveProfile(userId, updated)
                                     Toast.makeText(context, "Design Applied!", Toast.LENGTH_SHORT).show()
                                     onBack()
@@ -88,32 +94,59 @@ fun WebDesignFullScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Select a design preset to transform your web page. New presets will override your current standard layout.",
-                style = MaterialTheme.typography.bodyMedium
-            )
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(
+                    text = "Select a compact design preset to transform your web page. Each design is now fully responsive for mobile and desktop.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
 
-            PresetCard(
-                name = "Default Classic",
-                description = "The standard layout with a clean hero and catalog grid.",
-                isSelected = selectedPreset == "default",
-                onClick = { selectedPreset = "default" }
-            )
+                PresetCard(
+                    name = "Default Classic",
+                    description = "The robust standard layout with a profile sidebar. Great for readability.",
+                    isSelected = selectedPreset == ID_CLASSIC,
+                    onClick = { selectedPreset = ID_CLASSIC }
+                )
 
-            PresetCard(
-                name = "Modern Dark Minimalist",
-                description = "A bold dark theme with card-based layouts and sleek animations.",
-                isSelected = selectedPreset == "modern",
-                onClick = { selectedPreset = "modern" }
-            )
+                PresetCard(
+                    name = "Modern Minimalist",
+                    description = "Ultra-clean and fast. Focuses on your story with bold typography.",
+                    isSelected = selectedPreset == ID_MINIMALIST,
+                    onClick = { selectedPreset = ID_MINIMALIST }
+                )
+
+                PresetCard(
+                    name = "The Explorer",
+                    description = "Rugged and nature-inspired. Perfect for adventure and scenic tours.",
+                    isSelected = selectedPreset == ID_EXPLORER,
+                    onClick = { selectedPreset = ID_EXPLORER }
+                )
+
+                PresetCard(
+                    name = "The Executive",
+                    description = "Premium high-contrast theme for VIP and corporate services.",
+                    isSelected = selectedPreset == ID_EXECUTIVE,
+                    onClick = { selectedPreset = ID_EXECUTIVE }
+                )
+
+                PresetCard(
+                    name = "The Storyteller",
+                    description = "Magazine-style journal layout that builds a personal connection.",
+                    isSelected = selectedPreset == ID_STORYTELLER,
+                    onClick = { selectedPreset = ID_STORYTELLER }
+                )
+            }
         }
     }
 }
@@ -146,33 +179,3 @@ private fun PresetCard(
         }
     }
 }
-
-private val modernPresetHtml = """
-<style>
-    :root {
-        --primary: #bb86fc;
-        --bg: #121212;
-        --surface: #1e1e1e;
-        --text: #ffffff;
-    }
-    body { background-color: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; }
-    .hero { padding: 4rem 2rem; background: linear-gradient(135deg, #1e1e1e, #121212); text-align: center; border-bottom: 1px solid #333; }
-    .hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--primary); }
-    .card { background: var(--surface); border-radius: 12px; padding: 1.5rem; margin: 1rem 0; border: 1px solid #333; }
-</style>
-<div class="hero">
-    <h1 id="driver-name">Loading...</h1>
-    <p id="web-tagline">Elite Private Driver Guide</p>
-    <div style="display: flex; justify-content: center; gap: 10px; margin-top: 1rem;" id="web-services-list"></div>
-</div>
-<div class="container" style="padding: 2rem;">
-    <h2 style="border-left: 4px solid var(--primary); padding-left: 1rem;">Experience Excellence</h2>
-    <div class="card">
-        <p id="driver-bio"></p>
-        <p id="web-vehicle-info" style="font-weight: bold;"></p>
-    </div>
-    
-    <h2 style="margin-top: 3rem;">Exploration Packages</h2>
-    <div id="catalog-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;"></div>
-</div>
-""".trimIndent()

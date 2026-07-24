@@ -1,0 +1,30 @@
+<style>
+    :root { --gold: #d4af37; --dark: #0a0a0f; }
+    body { background: var(--dark); color: #fff; font-family: 'Inter', sans-serif; margin: 0; }
+    header { padding: 6rem 2rem; border-bottom: 1px solid rgba(212, 175, 55, 0.2); text-align: center; }
+    h1 { font-size: clamp(2rem, 8vw, 4rem); color: var(--gold); font-weight: 200; text-transform: uppercase; letter-spacing: 8px; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 3rem; }
+    .details { display: grid; grid-template-columns: 1fr; gap: 4rem; margin-bottom: 6rem; }
+    @media(min-width: 900px) { .details { grid-template-columns: 1.5fr 1fr; } }
+    .info-card { background: #111; padding: 3rem; border-left: 3px solid var(--gold); }
+</style>
+<header>
+    <h1 id="driver-name">Loading...</h1>
+    <p id="web-tagline" style="opacity: 0.5; letter-spacing: 4px;"></p>
+    <div id="driver-location" style="color: var(--gold); margin-top: 20px;"></div>
+</header>
+<div class="container">
+    <div class="details">
+        <div>
+            <h2 style="font-weight: 300; text-transform: uppercase; color: var(--gold);">Executive Summary</h2>
+            <p id="driver-bio" style="line-height: 2.2; opacity: 0.7;"></p>
+        </div>
+        <div class="info-card">
+            <p style="color: var(--gold); font-size: 0.8rem; font-weight: 900;">PREMIUM TRANSPORT</p>
+            <p id="web-vehicle-info" style="font-size: 1.5rem; font-weight: 200;"></p>
+            <div id="web-services-list" style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 2rem;"></div>
+        </div>
+    </div>
+    <div id="catalog-grid" class="grid"></div>
+</div>

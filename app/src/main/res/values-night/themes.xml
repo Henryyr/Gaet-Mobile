@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Gaet" parent="android:Theme.Material.Light.NoActionBar" />
-
-    <!-- Modern Splash Screen Theme (Light Mode) -->
+    <!-- Modern Splash Screen Theme (Dark Mode) -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/bg_light</item>
+        <item name="windowSplashScreenBackground">@color/bg_dark</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/gaet_logo</item>
         <item name="postSplashScreenTheme">@style/Theme.Gaet</item>
     </style>

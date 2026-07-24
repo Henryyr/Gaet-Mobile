@@ -9,10 +9,13 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/admin-tools" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/core-utils" />
           </set>
         </option>
       </GradleProjectSettings>
     </option>
+    <option name="parallelModelFetch" value="true" />
   </component>
 </project>

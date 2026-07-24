@@ -129,11 +129,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const userDoc = await db.collection("users").doc(uid).get();
                 if (userDoc.exists) {
                     const d = userDoc.data();
+                    console.log("User data loaded:", d);
 
-                    // Check for custom HTML override
-                    if (d.custom_html && d.custom_html.trim() !== "") {
-                        document.body.innerHTML = d.custom_html;
-                    } else {
+                    // 1. Fetch Structural Theme from Master Collection
+                    const themeId = d.theme_id || "7j8K9L0m1N2p3Q4r5S6t";
+                    console.log("Target Theme ID:", themeId);
+
+                    try {
+                        const themeDoc = await db.collection("master_themes").doc(themeId).get();
+                        if (themeDoc.exists) {
+                            console.log("Master Theme document found.");
+                            const content = themeDoc.data().theme_content;
+                            if (content) {
+                                document.body.innerHTML = content;
+                                console.log("Theme HTML injected into body.");
+                            } else {
+                                console.warn("Theme content is empty, falling back to default.");
+                                await loadDefaultLayout();
+                            }
+                        } else {
+                            console.error("Theme document NOT found in Firestore:", themeId);
+                            await loadDefaultLayout();
+                        }
+                    } catch (themeErr) {
+                        console.error("Critical Theme Fetch Error:", themeErr);
                         await loadDefaultLayout();
                     }
 

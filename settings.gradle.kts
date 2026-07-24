@@ -24,4 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "GaetDriver"
 include(":app")
+include(":admin-tools")
+include(":core-utils")
  

@@ -75,7 +75,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.coil.compose)
+    implementation(project(":core-utils"))
     
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.firestore)

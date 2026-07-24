@@ -22,6 +22,7 @@ fun WebPreviewFullScreen(
     val userId = authManager.currentUserId
     
     var webView: WebView? by remember { mutableStateOf(null) }
+    var refreshTrigger by remember { mutableLongStateOf(System.currentTimeMillis()) }
 
     Scaffold(
         topBar = {
@@ -33,19 +34,25 @@ fun WebPreviewFullScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { webView?.reload() }) {
+                    IconButton(onClick = { 
+                        refreshTrigger = System.currentTimeMillis()
+                        webView?.clearCache(true)
+                        webView?.reload() 
+                    }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Reload")
                     }
                 }
             )
         }
     ) { innerPadding ->
-        WebPreviewContent(
-            userId = userId,
-            onWebViewCreated = { webView = it },
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        )
+        key(refreshTrigger) {
+            WebPreviewContent(
+                userId = userId,
+                onWebViewCreated = { webView = it },
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize()
+            )
+        }
     }
 }
